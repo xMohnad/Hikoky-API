@@ -1,2 +1,41 @@
+
+
+# Ignore Python cache files
 __pycache__/
-test.py
+*.py[cod]
+
+# Ignore virtual environment directories
+env/
+venv/
+ENV/
+VENV/
+env.bak/
+venv.bak/
+
+# Ignore test files
+test/
+test.db
+data.py
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore configuration and secrets
+*.env
+.env.local
+.env.*.local
+
+# Ignore IDE and editor specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# Ignore compiled code and logs
+*.log
+*.pot
+*.mo
+*.swp
+*.swo

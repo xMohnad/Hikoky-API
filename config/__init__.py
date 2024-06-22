@@ -1,3 +1,7 @@
-from .sources_config import sourceHandlers, sources
+from .sources_config import source_handlers, get_sources, searchHandlers
 
-__all__ = ["sourceHandlers", "sources"]
+__all__ = [
+    "source_handlers", 
+    "get_sources",
+    "searchHandlers"
+]
