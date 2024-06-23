@@ -11,7 +11,7 @@
 #             globals()[attribute_name] = getattr(module, attribute_name)
 
 
-from .PyProbe import pyparse
+from .PyProbe import pyparse, HttpClientError
 
 from .search import search_teamx, search3asq
 
@@ -27,6 +27,7 @@ from .sources import (
 
 __all__ = [ 
     "pyparse",
+    "HttpClientError",
     "search_teamx", 
     "search3asq", 
     'home_teamx', 

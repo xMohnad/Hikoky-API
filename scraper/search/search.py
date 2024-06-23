@@ -2,9 +2,8 @@ from bs4 import BeautifulSoup
 import logging
 
 async def search3asq(response, source):
-    response_data = response.json()
-    if response_data.get('success', False):
-        result = response_data.get("data", [])
+    if response.get('success', False):
+        result = response.get("data", [])
         if result:
             data = []
             for manga in result:
@@ -17,7 +16,7 @@ async def search3asq(response, source):
         else:
             return {'success': False, "source": source, 'error': 'not found', "message": 'لا توجد مانجا'}
     else:
-        error_data = response_data.get('data', [{}])[0]
+        error_data = response.get('data', [{}])[0]
         error_type = error_data.get('error', 'Failed to retrieve data')
         if error_type == 'not found':
             return {'success': False, "source": source, 'error': 'not found', "message": 'لا توجد مانجا'}

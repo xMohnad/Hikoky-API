@@ -1,44 +1,37 @@
-from fastapi import APIRouter, Depends
-from fastapi import Query
-from typing import Optional, Dict, Any
-from config import searchHandlers
-from ..dependencies import getHandlerAndCheckErrors, fetch_data
-from Hikoky.models import Search
+from fastapi import APIRouter, Depends, Query
+from typing import Dict, Any
+from ..dependencies import handle_search
 
-
+# إنشاء APIRouter مع إعدادات الوسوم والاستجابات المخصصة
 router = APIRouter(
     tags=["Search"],
     responses={404: {"description": "Not found"}},
 )
 
-@router.get("/search", summary="Search in Source", response_description="Search results for the specified source.")
-async def search(source: str, query: str = Query(..., title="Search Query", description="Search term."),
-                handler: Dict[str, Any] = Depends(getHandlerAndCheckErrors)):
+@router.get(
+    "/search", 
+    summary="Search in Source", 
+    response_description="Search results for the specified source."
+)
+async def search(
+    result: Dict[str, Any] = Depends(handle_search)
+):
     """
     Search for a term in the specified source.
 
-    Args:
-        source (str): The name of the source.
-        query (str): The search query.
+    Parameters:
+    - result (Dict[str, Any]): The result of the search, fetched using the handle_search dependency. This dictionary contains the search results.
 
     Returns:
-        dict: Success status, source name, and search results.
+    - dict: A dictionary containing:
+        - success (bool): Indicates if the operation was successful.
+        - source (str): The name of the source.
+        - data (list): The search results.
     """
-    handler = searchHandlers.get(source)
-    if not handler:
-        return {'success': False, 'error': 'Invalid source'}
+    return result
 
-    url = handler["searchUrl"]
-    method = handler["method"]
-    headers = handler["headers"]
-    params = handler.get("params")(query) if handler.get("params") else None
-    data = handler.get("data")(query) if handler.get("data") else None
-    parse = handler["parse"]
-    
-    result = await fetch_data(url, method, headers=headers, params=params, data=data, parse=parse)
 
-    return await handler["search"](result, source)
-
+from Hikoky.models import Search
 @router.get("/search/all")
 async def get_all_search_data():
 

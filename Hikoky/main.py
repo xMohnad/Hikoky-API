@@ -19,7 +19,7 @@ async def list_sources():
     Returns:
         dict: Success status and data containing the list of sources.
     """
-    return {'success': True, "data": get_sources()}
+    return {'success': True, "data": get_sources}
 
 app.include_router(home.router)
 app.include_router(manga.router)

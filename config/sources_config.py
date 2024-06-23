@@ -13,6 +13,7 @@ from scraper import (
 )
 
 from typing import List, Dict
+from typing import Optional, Union, Dict, Any
 
 
 # Dictionary containing source handlers
@@ -36,26 +37,26 @@ source_handlers = [
 ]
 
 # Define searchHandlers dictionary
-async def get_sources() -> List[Dict[str, str]]:
-    """
-    Extract useful information for API users from source handlers.
-    """
-    return [
-        {
-            'name': handler['name'],
-            'query_param': handler['name'],
-            'base_url': handler.get('base_url'),
-            'logo_url': handler.get('logo_url'),
-        }
-        for handler in source_handlers
-    ]
-    
-    
-searchHandlers = {
-    "Team-X": {
-        "searchUrl": "https://www.teamxnovel.com/ajax/search",
-        "search": search_teamx,
+
+"""
+Extract useful information for API users from source handlers.
+"""
+get_sources = [
+    {
+        'name': handler['name'],
+        'query_param': handler['name'],
+        'base_url': handler.get('base_url'),
+        'logo_url': handler.get('logo_url'),
+    }
+    for handler in source_handlers
+]
+
+search_handlers = [
+    {
+        "name": "Team-X",
+        "search_URL": "https://www.teamxnovel.com/ajax/search",
         "method": "GET",
+        "search": search_teamx,
         "headers": {
             'authority': 'www.teamxnovel.com',
             'accept': '*/*',
@@ -63,10 +64,10 @@ searchHandlers = {
             'content-type': 'application/json;charset=UTF-8'
         },
         "params": lambda keyword: {'keyword': keyword},
-        "parse": True
     },
-    "3asq": {
-        "searchUrl": "https://3asq.org/wp-admin/admin-ajax.php",
+    {
+        "name": "3asq",
+        "search_URL": "https://3asq.org/wp-admin/admin-ajax.php",
         "search": search3asq,
         "method": "POST",
         "headers": {
@@ -82,6 +83,5 @@ searchHandlers = {
             "X-Requested-With": "XMLHttpRequest"
         },
         "data": lambda keyword: {"action": "wp-manga-search-manga", "title": keyword},
-        "parse": False
     }
-} 
+]

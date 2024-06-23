@@ -5,9 +5,28 @@ from httpx import HTTPStatusError, RequestError, ConnectError, TimeoutException
 import logging
 import random
 import asyncio
+from typing import Union
 
-def parse_content(content):
-    """Parse content with BeautifulSoup, handling both raw HTML and HTTP response objects."""
+
+
+class HttpClientError(Exception):
+    """Custom exception class for HTTP client errors."""
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
+
+def parse_html(content: Union[str, httpx.Response]) -> BeautifulSoup:
+    """
+    تحليل المحتوى باستخدام BeautifulSoup، معالجة كل من HTML الخام وكائنات الاستجابة HTTP.
+
+    Args:
+    - content (Union[str, httpx.Response]): المحتوى المراد تحليله.
+
+    Returns:
+    - BeautifulSoup: كائن BeautifulSoup بعد التحليل.
+    """
     return BeautifulSoup(content.text if hasattr(content, 'text') else content, "html.parser")
 
 def handle_errors(response, http_err):
@@ -22,7 +41,7 @@ def handle_errors(response, http_err):
     logging.error(error_message)
     return error_message
 
-async def pyparse(url, method="GET", parse=True, headers={}, params=None, data=None, max_retries=3, delay=1, timeout=7):
+async def pyparse(url, method="GET", headers={}, params=None, data=None, max_retries=3, delay=1, timeout=7):
     """Make a request to the specified URL using httpx async client."""
     async with httpx.AsyncClient() as client:
         for attempt in range(max_retries):
@@ -31,10 +50,14 @@ async def pyparse(url, method="GET", parse=True, headers={}, params=None, data=N
             try:
                 response = await client.request(method, url, headers=headers, params=params, data=data, timeout=timeout)
                 response.raise_for_status()
-                if parse:
-                    return parse_content(response)
-                
-                return response
+
+                content_type = response.headers.get('Content-Type', '').lower()
+                if 'application/json' in content_type:
+                    return response.json()
+                elif 'text/html' in content_type:
+                    return parse_html(response)
+                else:
+                    return response.text
                 
             except HTTPStatusError as http_err:
                 error_message = handle_errors(response, http_err)
@@ -60,4 +83,4 @@ async def pyparse(url, method="GET", parse=True, headers={}, params=None, data=N
                 logging.info(f"Retrying after {sleep_time:.2f} seconds for {url}...")
                 await asyncio.sleep(sleep_time)
         
-        return {"error": error_message}
+        raise HttpClientError(error_message)
