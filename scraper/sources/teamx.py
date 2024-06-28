@@ -1,8 +1,19 @@
 from bs4 import BeautifulSoup
 import logging
 import re
-from Hikoky.models import MangaFusion, Home,Manga, Chapter, MangaDetails, LatestChapters, MangaDetails,MangaInfo, ChapterDetails
-from typing import List, Optional
+
+from Hikoky.models import(
+    Home, 
+    Manga, 
+    Chapter, 
+    MangaDetails, 
+    LatestChapters, 
+    MangaDetails, 
+    MangaInfo, 
+    ChapterDetails
+)
+
+from typing import Optional
 
 # 
 def home_teamx(soup: BeautifulSoup) -> Home:

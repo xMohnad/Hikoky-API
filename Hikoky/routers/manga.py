@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Query
 from ..dependencies import get_handler, fetch_data
 
+from Hikoky.models import Manga
+
 router = APIRouter(
     tags=["Manga"],
     responses={404: {"description": "Not found"}}
@@ -8,6 +10,7 @@ router = APIRouter(
 
 @router.get(
     "/manga", 
+    # response_model=Manga,
     summary="Get Manga Page", 
     response_description="Manga page data for the specified source."
 )

@@ -1,5 +1,4 @@
-from typing import Dict
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Query
 from ..dependencies import get_handler, fetch_data
 
 router = APIRouter(

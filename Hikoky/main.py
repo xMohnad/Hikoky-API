@@ -1,9 +1,8 @@
 from fastapi import FastAPI
-from fastapi import APIRouter
 from .routers import home, manga, chapter, search
+from Hikoky.models import SourcesModel
 
 from config import get_sources
-
 
 app = FastAPI(
     title="Manga Scraper API",
@@ -11,7 +10,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-@app.get("/", tags=["Manga"], summary="Get Available Sources", response_description="List of available sources.")
+@app.get("/", tags=["Manga"],
+        summary="Get Available Sources",
+        response_model=SourcesModel,
+        response_description="List of available sources."
+)
 async def list_sources():
     """
     Retrieve the list of available manga sources.

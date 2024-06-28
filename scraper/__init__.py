@@ -13,7 +13,7 @@
 
 from .PyProbe import pyparse, HttpClientError
 
-from .search import search_teamx, search3asq
+from .search import SearchError, SearchNotFoundError, search_teamx, search3asq
 
 from .sources import ( 
     home_teamx,
@@ -28,6 +28,8 @@ from .sources import (
 __all__ = [ 
     "pyparse",
     "HttpClientError",
+    "SearchNotFoundError",
+    "SearchError",
     "search_teamx", 
     "search3asq", 
     'home_teamx', 

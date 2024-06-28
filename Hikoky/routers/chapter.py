@@ -10,6 +10,7 @@ router = APIRouter(
 
 @router.get(
     "/chapter", 
+    # response_model=ChapterModel,
     summary="Get Chapter Page", 
     response_description="Chapter page data for the specified source."
 )
@@ -32,14 +33,9 @@ async def chapter(
         - source (str): The name of the source.
         - data (dict): The data fetched from the chapter page.
     """
-    # استدعاء get_handler للحصول على عنوان URL والمعالج بناءً على chapter_URL
+
     url, handler = await get_handler(chapter_URL)
-    
-    # جلب البيانات من عنوان URL باستخدام fetch_data
     result = await fetch_data(url)
-    
-    # معالجة البيانات المسترجعة باستخدام معالج الفصل
     results = handler["chapter_page"](result, url)
 
-    # إرجاع قاموس يحتوي على حالة النجاح، اسم المصدر، والبيانات المسترجعة
     return {'success': True, "source": handler["name"], "data": results}
