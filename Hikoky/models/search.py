@@ -8,11 +8,11 @@ from .session import Base, Database
 class Search(Base):
     __tablename__ = 'search'
 
+    source = Column(String, primary_key=True)
     name = Column(String, primary_key=True)
     link = Column(Text, nullable=False)
     cover = Column(Text, nullable=True)
     badge = Column(Text, nullable=True)
-    source = Column(String, primary_key=True)
 
     __table_args__ = (
         Index('idx_name', 'name'),

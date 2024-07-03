@@ -1,10 +1,14 @@
 from typing import List, Optional
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, field,  asdict
+
 from .search import Search
+from .paths import PathManga, generate_manga_path
+
 
 # Define a base class with the to_dict method
 @dataclass
 class BaseModel:
+    
     def to_dict(self):
         return asdict(self)
 
@@ -20,12 +24,18 @@ class MangaDetails(BaseModel):
     name: str
     link: str
     cover: str
+    team: Optional[str]
+    path: str = field(init=False)
     chapters: LatestChapters
-    team: Optional[str] = None
+    
+    def __post_init__(self):
+        self.path = generate_manga_path(self.name)
     
     def saver(self, source: Optional[str] = None):
         Search(self.name, self.link, self.cover, self.team, source).save()
 
+        PathManga(source, self.path, self.link).add_path()
+        
 @dataclass
 class Home(BaseModel):
     mangaData: List[MangaDetails]

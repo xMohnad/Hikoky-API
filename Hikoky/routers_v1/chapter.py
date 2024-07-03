@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Query
 from typing import Optional
 from ..dependencies import get_handler, fetch_data
+from fastapi import HTTPException
 
 # إنشاء APIRouter مع إعدادات الوسوم والاستجابات المخصصة
 router = APIRouter(
@@ -15,8 +16,8 @@ router = APIRouter(
     response_description="Chapter page data for the specified source."
 )
 async def chapter(
-    chapter_URL: Optional[str] = Query(
-        None, 
+    chapterURL: str = Query(
+        ..., 
         title="Chapter Page URL", 
         description="URL for the chapter page. Provide this URL to fetch the chapter page data."
     )
@@ -25,7 +26,7 @@ async def chapter(
     Retrieve the chapter page data for the specified source.
 
     Parameters:
-    - chapter_URL (Optional[str]): The URL for the chapter page. This parameter is required to fetch the chapter page data. Defaults to None.
+    - chapterURL (str): The URL for the chapter page. This parameter is required to fetch the chapter page data.
 
     Returns:
     - dict: A dictionary containing:
@@ -33,9 +34,17 @@ async def chapter(
         - source (str): The name of the source.
         - data (dict): The data fetched from the chapter page.
     """
+    try:
+        url, handler = await get_handler(chapterURL)
+        result = await fetch_data(url)
+        results = handler["chapter_page"](result, url)
+    
+        return {'success': True, "source": handler["name"], "data": results}
+    
+    except HTTPException as e:
+        return {"success": False, **e.detail}
 
-    url, handler = await get_handler(chapter_URL)
-    result = await fetch_data(url)
-    results = handler["chapter_page"](result, url)
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
-    return {'success': True, "source": handler["name"], "data": results}
+

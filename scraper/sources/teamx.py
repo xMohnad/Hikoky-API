@@ -45,9 +45,10 @@ def home_teamx(soup: BeautifulSoup) -> Home:
             name=name, 
             link=link, 
             cover=cover, 
-            chapters=chapters
+            chapters=chapters,
+            team=None
         )
-        manga_data.saver( source="Team-X")
+        manga_data.saver(source="Team-X")
         data_mangas.append(manga_data)
 
     next_url = extract_next_page_url(soup)

@@ -1,7 +1,5 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from ..dependencies import get_handler, fetch_data
-
-from Hikoky.models import Manga
 
 router = APIRouter(
     tags=["Manga"],
@@ -15,8 +13,8 @@ router = APIRouter(
     response_description="Manga page data for the specified source."
 )
 async def manga(
-    manga_URL: str = Query(
-        None, 
+    mangaURL: str = Query(
+        ..., 
         title="Manga Page URL", 
         description="The URL for the manga page. Provide this URL to fetch the manga page data."
     )
@@ -25,14 +23,21 @@ async def manga(
     Retrieve the manga page data for the specified source.
 
     Parameters:
-    - manga_URL (str, optional): The URL for the manga page. This parameter is required to fetch the manga page data.
+    - mangaURL (str): The URL for the manga page. This parameter is required to fetch the manga page data.
 
     Returns:
     - dict: A dictionary containing the success status, the source name, and the data from the manga page.
     """
 
-    url, handler = await get_handler(manga_URL)
-    result = await fetch_data(url)
-    results = handler["manga_page"](result)
+    try:
+        url, handler = await get_handler(mangaURL)
+        result = await fetch_data(url)
+        results = handler["manga_page"](result)
 
-    return {'success': True, "source": handler["name"], "data": results}
+        return {'success': True, "source": handler["name"], "data": results}
+
+    except HTTPException as e:
+        return {"success": False, **e.detail}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}

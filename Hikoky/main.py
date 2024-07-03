@@ -1,20 +1,47 @@
 from fastapi import FastAPI
-from .routers import home, manga, chapter, search
-from Hikoky.models import SourcesModel
-
 from config import get_sources
+from .routers_v1.main_v1 import app_v1
+from .routers_v2.main_v2 import app_v2
+from .search_routers.main_search import search
+
+servers = [
+    {"url": "/", "description": "Get Available Sources"},
+    {"url": "/v1", "description": "First Edition (V1)"},
+    {"url": "/v2", "description": "Second Edition (V2)"},
+    {"url": "/search", "description": "Search Endpoint"}
+]
 
 app = FastAPI(
     title="Manga Scraper API",
-    description="API to scrape manga information from different sources",
-    version="1.0.0"
+    description=(
+        "## Overview\n"
+        "This API allows you to scrape manga information from various sources.\n\n"
+        "## Available Versions:\n"
+        "- **[First Edition (V1) Documentation](/v1/docs)**: Use links as queries to fetch data.\n"
+        "- **[Second Edition (V2) Documentation](/v2/docs)**: Endpoints organized by manga name and chapter number.\n"
+        "- **[Search Endpoint](/search/docs)**: Search manga across different sources.\n\n"
+        "## How to Use:\n"
+        "### Version 1:\n"
+        "Fetch data using direct links. Refer to the [documentation](/v1/docs) for more details.\n\n"
+        "### Version 2:\n"
+        "Endpoints are organized by manga name and chapter number (e.g., `/mangaPath/chapterNumber`).\n\n"
+        "### Search Endpoint:\n"
+        "Search for manga across various sources using this endpoint. Refer to the [documentation](/search/docs) for more details.\n\n"
+        "## Contact\n"
+        "For support or further information, you can contact us through our [Twitter](https://twitter.com/your_twitter_handle).\n"
+    ),
+    version="2.0.0",
+    servers=servers,
+    contact={
+        "name": "API Support",
+        "twitter": "https://twitter.com/your_twitter_handle"
+    }
 )
 
-@app.get("/", tags=["Manga"],
+@app.get("/", 
+        tags=["Sources"],
         summary="Get Available Sources",
-        response_model=SourcesModel,
-        response_description="List of available sources."
-)
+        response_description="List of available sources.")
 async def list_sources():
     """
     Retrieve the list of available manga sources.
@@ -24,7 +51,6 @@ async def list_sources():
     """
     return {'success': True, "data": get_sources}
 
-app.include_router(home.router)
-app.include_router(manga.router)
-app.include_router(chapter.router)
-app.include_router(search.router)
+app.mount("/v1", app_v1)
+app.mount("/v2", app_v2)
+app.mount("/search", search)

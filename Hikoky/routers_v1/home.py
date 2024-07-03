@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from ..dependencies import get_handler, fetch_data
 
 router = APIRouter(
@@ -13,7 +13,7 @@ router = APIRouter(
     # description="Retrieve the home page data for a specified source or the next page. Either 'Source name' or 'Next page URL' must be provided."
 )
 async def home(
-    source_or_next_page: str = Query(
+    sourceOrNextPage: str = Query(
         ..., 
         title="Source or Next Page URL", 
         description="Specify either the source name to get the initial home page data or the next page URL for pagination."
@@ -23,13 +23,21 @@ async def home(
     Retrieve the home page data for a specified source or the next page.
 
     Args:
-    - source_or_next_page (str): Either the name of the source to retrieve the initial home page data, or the URL of the next page to fetch more data.
+    - sourceOrNextPage (str): Either the name of the source to retrieve the initial home page data, or the URL of the next page to fetch more data.
 
     Returns:
     - dict: A dictionary with the success status, the source name, and the home page data.
     """
-    url, handler = await get_handler(source_or_next_page)
 
-    result = await fetch_data(url)
-    results = handler["home_page"](result)
-    return {'success': True, "source": handler["name"], "data": results}
+
+    try:
+        url, handler = await get_handler(sourceOrNextPage)
+        result = await fetch_data(url)
+        results = handler["home_page"](result)
+        return {'success': True, "source": handler["name"], "data": results}
+
+    except HTTPException as e:
+        return {"success": False, **e.detail}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
