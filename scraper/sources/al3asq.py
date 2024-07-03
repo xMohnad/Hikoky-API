@@ -98,7 +98,7 @@ def extractChapterInfo(title):
     
     return chapter_number, chapter_title
 
-def manga3asq(soup: BeautifulSoup) -> Manga:
+def manga3asq(soup: BeautifulSoup, source: str,  manga_path: str) -> Manga:
     name = soup.find("div", class_="post-title").find("h1").text.strip()
     about_story = soup.find('div', class_='manga-excerpt')
     if about_story:
@@ -126,13 +126,17 @@ def manga3asq(soup: BeautifulSoup) -> Manga:
         chapterTitleText = aTag.text.strip()
         chapter_number, chapter_title = extractChapterInfo(chapterTitleText)
         
-        chapters.append(ChapterDetails(
+        chapter_details = ChapterDetails(
             number=chapter_number,
             link=chapter_url,
             title=chapter_title,
             date=date 
-        ))
+        )
         
+        chapter_details.saver(source, manga_path) 
+        chapters.append(chapter_details)
+
+
     return Manga(
         mangaList=info_manga,
         chapters=chapters,

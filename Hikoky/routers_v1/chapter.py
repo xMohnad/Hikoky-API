@@ -34,17 +34,11 @@ async def chapter(
         - source (str): The name of the source.
         - data (dict): The data fetched from the chapter page.
     """
-    try:
-        url, handler = await get_handler(chapterURL)
-        result = await fetch_data(url)
-        results = handler["chapter_page"](result, url)
-    
-        return {'success': True, "source": handler["name"], "data": results}
-    
-    except HTTPException as e:
-        return {"success": False, **e.detail}
 
-    except Exception as e:
-        return {"success": False, "error": str(e)}
 
+    url, handler = await get_handler(chapterURL)
+    result = await fetch_data(url)
+    results = handler["chapter_page"](result, url)
+
+    return {'success': True, "source": handler["name"], "data": results}
 

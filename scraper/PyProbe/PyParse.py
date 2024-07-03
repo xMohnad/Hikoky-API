@@ -9,9 +9,9 @@ from typing import Union
 
 class HttpClientError(Exception):
     """Custom exception class for HTTP client errors."""
-    def __init__(self, message):
-        self.message = message
-        super().__init__(self.message)
+    def __init__(self, detail):
+        self.detail = detail
+        super().__init__(self.detail)
 
 def parse_html(content: Union[str, httpx.Response]) -> BeautifulSoup:
     """
@@ -91,4 +91,4 @@ async def pyparse(url, method="GET", headers={}, params=None, data=None, max_ret
                 logging.info(f"Retrying after {sleep_time:.2f} seconds for {url}...")
                 await asyncio.sleep(sleep_time)
 
-        raise HttpClientError(error_message)
+        raise HttpClientError({"error": error_message})

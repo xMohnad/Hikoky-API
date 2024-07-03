@@ -1,16 +1,28 @@
 # hikoky-API/Hikoky/dependencies.py
 from config import source_handlers, search_handlers
-from typing import Dict, Any, Union, List
+from typing import Dict, Any, Union, List, Optional
 
 from fastapi import HTTPException
 from scraper import pyparse, HttpClientError
-from scraper import SearchError, SearchNotFoundError
+from scraper import SearchError
 
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
-import logging
 
-# V1 handler 
+from .models.paths import PathManga, PathChapter
+
+err = {"success": False}
+
+# uesd in any Version
+async def fetch_data(url: str, method="GET", headers=None, params=None, data=None):
+
+    try:
+        result = await pyparse(url, method, headers=headers, params=params, data=data)
+        return result
+
+    except HttpClientError as e:
+        raise HTTPException(status_code=400, detail={**err, **e.detail})
+
 async def get_handler(header_value: str):
     parsed_source_netloc = urlparse(header_value).netloc
 
@@ -20,8 +32,7 @@ async def get_handler(header_value: str):
         elif header_value.lower() == handler["name"].lower():
             return handler["base_url"], handler
 
-    raise HTTPException(status_code=400, detail={"error": "Either a valid source name or a valid URl must be provided."})
-
+    raise HTTPException(status_code=400, detail={**err, "error": "Either a valid source name or a valid URl must be provided."})
 # ============================================
 
 # About search 
@@ -45,9 +56,9 @@ async def handle_search(keyword: str, source: str) -> Union[Dict[str, Any], Beau
                 raise HTTPException(status_code=404, detail=e.detail)
 
             except HttpClientError as e:
-                raise HTTPException(status_code=400, detail=f"Error: {e.message}")
+                raise HTTPException(status_code=400, detail={**err, **e.detail})
 
-    raise HTTPException(status_code=400, detail=f"Invalid source, No source found {source}")
+    raise HTTPException(status_code=400, detail={**err, "erroe": f"Invalid source, No source found {source}"})
 
 async def handle_search_in_all_sources(keyword: str) -> List[Union[Dict[str, Any], BeautifulSoup, str]]:
     results = []
@@ -65,31 +76,46 @@ async def handle_search_in_all_sources(keyword: str) -> List[Union[Dict[str, Any
             search_result = await handler["search"](result, name)
             results.append(search_result)
 
-        except SearchNotFoundError as e:
-            results.append(e.detail)
-
         except SearchError as e:
             results.append(e.detail)
 
         except HttpClientError as e:
-            error = {"Error": e.message}
-            logging.error(f"Error searching in source {name}: {e.message}")
-            results.append(error)
+            results.append(e.detail)
 
     if not results:
-        raise HTTPException(status_code=404, detail={"Error": "No results found"})
+        raise HTTPException(status_code=404, detail={**err, "Error": "No results found"})
     return results
 
 # ==============================================================
-# uesd in any Version
-async def fetch_data(url: str, method="GET", headers=None, params=None, data=None):
-
-    try:
-        result = await pyparse(url, method, headers=headers, params=params, data=data)
-        return result
-
-    except HttpClientError as e:
-        raise HTTPException(status_code=400, detail={"error": e.message})
-
-
 # about V2
+
+async def handle_manga_request(source: str, mangaPath: Optional[str] = None, chapterPath: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Handles the manga request based on the provided source, manga path, and chapter path.
+
+    Args:
+    - source (str): The source name.
+    - mangaPath (Optional[str]): The path to the manga. Default is None.
+    - chapterPath (Optional[str]): The path to the chapter. Default is None.
+
+    Returns:
+    - Dict[str, Any]: A dictionary with the success status, source name, and the requested data.
+
+    Raises:
+    - HTTPException
+    """
+    _, handler = await get_handler(source)
+
+    if mangaPath and not chapterPath:
+        link = PathManga.get_link(handler["name"], mangaPath)
+        result = await fetch_data(link)
+        results = handler["manga_page"](result, handler["name"], mangaPath)
+
+    elif mangaPath and chapterPath:
+        link = PathChapter.get_link(handler["name"], mangaPath, chapterPath)
+        result = await fetch_data(link)
+        results = handler["chapter_page"](result, link)
+    else:
+        pass
+
+    return {'success': True, "source": handler["name"], "data": results}

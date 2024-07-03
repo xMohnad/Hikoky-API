@@ -29,15 +29,7 @@ async def home(
     - dict: A dictionary with the success status, the source name, and the home page data.
     """
 
-
-    try:
-        url, handler = await get_handler(sourceOrNextPage)
-        result = await fetch_data(url)
-        results = handler["home_page"](result)
-        return {'success': True, "source": handler["name"], "data": results}
-
-    except HTTPException as e:
-        return {"success": False, **e.detail}
-
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+    url, handler = await get_handler(sourceOrNextPage)
+    result = await fetch_data(url)
+    results = handler["home_page"](result)
+    return {'success': True, "source": handler["name"], "data": results}

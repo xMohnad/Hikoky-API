@@ -1,9 +1,5 @@
-# from sqlalchemy.ext.declarative import declarative_base
-
-# /database.py
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import declarative_base, sessionmaker, scoped_session
 from contextlib import contextmanager
 
 Base = declarative_base()
@@ -28,5 +24,3 @@ class Database:
             yield session
         finally:
             session.close()
-
-Database.init_db()

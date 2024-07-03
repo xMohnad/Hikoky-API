@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query
 from ..dependencies import get_handler, fetch_data
 
 router = APIRouter(
@@ -29,15 +29,8 @@ async def manga(
     - dict: A dictionary containing the success status, the source name, and the data from the manga page.
     """
 
-    try:
-        url, handler = await get_handler(mangaURL)
-        result = await fetch_data(url)
-        results = handler["manga_page"](result)
+    url, handler = await get_handler(mangaURL)
+    result = await fetch_data(url)
+    results = handler["manga_page"](result)
 
-        return {'success': True, "source": handler["name"], "data": results}
-
-    except HTTPException as e:
-        return {"success": False, **e.detail}
-
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+    return {'success': True, "source": handler["name"], "data": results}

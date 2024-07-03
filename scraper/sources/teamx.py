@@ -66,7 +66,7 @@ def extract_chapter_number(chapter_list, index: int) -> Optional[str]:
     
     
 # 
-def manga_teamx(soup: BeautifulSoup) -> Manga:
+def manga_teamx(soup: BeautifulSoup, source: str, manga_path: str) -> Manga:
     container = soup.find('div', class_="container")
     
     cover_manga = container.find('img', class_="shadow-sm")['src']
@@ -100,14 +100,16 @@ def manga_teamx(soup: BeautifulSoup) -> Manga:
         chapter_title = all_info.find('div', class_="epl-title").get_text(strip=True)
 
         date = all_info.find('div', class_="epl-date").get_text(strip=True)
-        
-        chapters.append(ChapterDetails(
+
+        chapter_details = ChapterDetails(
             number=chapter_number,
             link=chapter_url,
             title=chapter_title,
             date=date 
-        ))
-        
+        )
+
+        chapter_details.saver(source, manga_path)
+        chapters.append(chapter_details)
         
     next_page_link = get_next_page_url(container)
     

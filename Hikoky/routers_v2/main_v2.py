@@ -10,5 +10,5 @@ app_v2 = FastAPI(
 
 app_v2.include_router(home.router)
 app_v2.include_router(manga.router)
-# app_v2.include_router(chapter.router, prefix="/v2")
+app_v2.include_router(chapter.router)
 

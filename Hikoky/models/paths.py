@@ -6,11 +6,6 @@ from .session import Database, Base
 from fastapi import HTTPException
 import re
 
-# from sqlalchemy.orm import declarative_base
-# Base = declarative_base()
-
-
-
 def generate_manga_path(name: str):
     name = re.sub(r'[^\w\s-]', '', name, flags=re.UNICODE)
     name = name.replace(" ", "-").replace("_", "-")
@@ -60,10 +55,54 @@ class PathManga(Base):
         with Database.get_session() as session:
             return session.query(cls).all()
 
-# Database.init_db()
 
-"""
-new_path = PathManga("3asq","boruto", "www.3asq.com/boruto")
-new_path.add_path()
-link = PathManga.get_all_data()
-"""
+
+# ========================================
+class PathChapter(Base):
+    __tablename__ = 'ChaperPath'
+
+    source = Column(String, primary_key=True)
+    path_manga = Column(String, primary_key=True)
+    path_chapter = Column(String, primary_key=True)
+    link = Column(Text, nullable=False)
+
+    __table_args__ = (
+        Index('idx_sources', 'source'),
+        Index('idx_path_manga', 'path_manga'),
+        Index('idx_path_chapter', 'path_chapter'),
+    )
+
+    def __init__(self, source, path_manga, path_chapter, link):
+        self.source = source
+        self.path_manga = path_manga
+        self.path_chapter = path_chapter
+        self.link = link
+
+    def add_path(self):
+        with Database.get_session() as session:
+            session.merge(self)
+            session.commit()
+    
+    @classmethod
+    def get_link(cls, source, path_manga, path_chapter):
+        with Database.get_session() as session:
+            link = session.query(PathChapter.link).filter(
+                func.lower(PathChapter.source) == func.lower(source),
+                func.lower(PathChapter.path_manga) == func.lower(path_manga),
+                func.lower(PathChapter.path_chapter) == func.lower(path_chapter)
+        ).scalar()
+            print(link)
+        if link:
+            return link
+            
+        else:
+            raise HTTPException(
+            status_code=404,
+            detail={"error": "Chapter not available. Please check the path validity."},
+            headers={"X-Error": "Chapter Not Available - Possible path error"},
+        )
+
+    @classmethod
+    def get_all_data(cls):
+        with Database.get_session() as session:
+            return session.query(cls).all()

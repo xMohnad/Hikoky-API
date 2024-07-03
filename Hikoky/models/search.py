@@ -1,8 +1,8 @@
 # app/models/search.py
-from sqlalchemy import Column, String, Text, Index
 from fastapi import HTTPException
 from typing import Optional
 
+from sqlalchemy import Column, String, Text, Index
 from .session import Base, Database
 
 class Search(Base):
@@ -53,7 +53,7 @@ class Search(Base):
         if source:
             with Database.get_session() as session:
                 if not session.query(cls).filter(cls.source == source).first():
-                    raise HTTPException(status_code=400, detail={"Error": f'Invalid source, No source found {source}', "message": 'المصدر غير متوفر'})
+                    raise HTTPException(status_code=404, detail={"Error": f'Invalid source, No source found {source}', "message": 'المصدر غير متوفر'})
 
             result = cls.search_by_source(source, keyword)
             if not result:

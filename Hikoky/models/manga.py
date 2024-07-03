@@ -2,7 +2,7 @@ from typing import List, Optional
 from dataclasses import dataclass, field,  asdict
 
 from .search import Search
-from .paths import PathManga, generate_manga_path
+from .paths import PathManga, PathChapter, generate_manga_path
 
 
 # Define a base class with the to_dict method
@@ -31,7 +31,7 @@ class MangaDetails(BaseModel):
     def __post_init__(self):
         self.path = generate_manga_path(self.name)
     
-    def saver(self, source: Optional[str] = None):
+    def saver(self, source: str):
         Search(self.name, self.link, self.cover, self.team, source).save()
 
         PathManga(source, self.path, self.link).add_path()
@@ -41,6 +41,7 @@ class Home(BaseModel):
     mangaData: List[MangaDetails]
     nextUrl: Optional[str]
 
+# ======================================
 @dataclass
 class MangaInfo(BaseModel):
     name: str 
@@ -53,8 +54,16 @@ class MangaInfo(BaseModel):
 class ChapterDetails(BaseModel):
     number: str
     link: str 
+    path: str = field(init=False)
     title: str
     date: str
+
+    def __post_init__(self):
+        self.path = generate_manga_path(self.number)
+
+    def saver(self, source: str, path_chapter: str):
+        PathChapter(source, path_chapter, self.number, self.link).add_path()
+
 
 @dataclass
 class Manga(BaseModel):
@@ -62,6 +71,7 @@ class Manga(BaseModel):
     chapters: List[ChapterDetails]
     nextPageLink: Optional[str] = None
 
+# ==================================================
 @dataclass
 class Chapter(BaseModel):
     title: str 
