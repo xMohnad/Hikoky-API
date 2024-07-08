@@ -5,8 +5,9 @@ from typing import Optional
 from sqlalchemy import Column, String, Text, Index
 from .session import Base, Database
 
+
 class Search(Base):
-    __tablename__ = 'search'
+    __tablename__ = "search"
 
     source = Column(String, primary_key=True)
     name = Column(String, primary_key=True)
@@ -15,8 +16,8 @@ class Search(Base):
     badge = Column(Text, nullable=True)
 
     __table_args__ = (
-        Index('idx_name', 'name'),
-        Index('idx_source', 'source'),
+        Index("idx_name", "name"),
+        Index("idx_source", "source"),
     )
 
     def __init__(self, name, link, cover=None, badge=None, source=None):
@@ -35,7 +36,11 @@ class Search(Base):
     def search_by_source(cls, source, keyword):
         with Database.get_session() as session:
             pattern = f"%{keyword}%"
-            return session.query(cls).filter(cls.source == source, cls.name.like(pattern)).all()
+            return (
+                session.query(cls)
+                .filter(cls.source == source, cls.name.like(pattern))
+                .all()
+            )
 
     @classmethod
     def search_by_name(cls, keyword):
@@ -53,16 +58,36 @@ class Search(Base):
         if source:
             with Database.get_session() as session:
                 if not session.query(cls).filter(cls.source == source).first():
-                    raise HTTPException(status_code=404, detail={"Error": f'Invalid source, No source found {source}', "message": 'المصدر غير متوفر'})
+                    raise HTTPException(
+                        status_code=404,
+                        detail={
+                            "success": False,
+                            "Error": f"Invalid source, No source found {source}",
+                            "message": "المصدر غير متوفر",
+                        },
+                    )
 
             result = cls.search_by_source(source, keyword)
             if not result:
-                raise HTTPException(status_code=404, detail={"Error": f'not found in {source}', "message": 'لا توجد مانجا'})
+                raise HTTPException(
+                    status_code=404,
+                    detail={
+                        "success": False,
+                        "Error": f"not found in {source}",
+                        "message": "لا توجد مانجا",
+                    },
+                )
             return result
 
         else:
             search_results = cls.search_by_name(keyword)
             if not search_results:
-                raise HTTPException(status_code=404, detail={"Error": "not found in any source", "message": 'لا توجد مانجا في أي مصدر'})
+                raise HTTPException(
+                    status_code=404,
+                    detail={
+                        "Error": "not found in any source",
+                        "message": "لا توجد مانجا في أي مصدر",
+                    },
+                )
 
             return search_results

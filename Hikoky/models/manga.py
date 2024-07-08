@@ -1,81 +1,83 @@
-from typing import List, Optional
-from dataclasses import dataclass, field,  asdict
-
 from .search import Search
 from .paths import PathManga, PathChapter, generate_manga_path
+from pydantic import BaseModel
+from typing import List, Optional
 
 
-# Define a base class with the to_dict method
-@dataclass
-class BaseModel:
-    
-    def to_dict(self):
-        return asdict(self)
-
-@dataclass
 class LatestChapters(BaseModel):
-    latestNum: Optional[str]
-    penultimateNum: Optional[str]
-    latestUrl: Optional[str]
-    penultimateUrl: Optional[str]
+    num: Optional[str]
+    url: Optional[str]
+    path: Optional[str] = None
 
-@dataclass
+    def saver(self, source: str, manga_name: str):
+        manga_path = generate_manga_path(manga_name)
+        PathChapter(source, manga_path, self.num, self.url).add_path()
+        self.path = f"/v2/source/{source}/{manga_path}/{self.num}"
+
+
 class MangaDetails(BaseModel):
     name: str
     link: str
     cover: str
+    path: str = None
     team: Optional[str]
-    path: str = field(init=False)
-    chapters: LatestChapters
-    
-    def __post_init__(self):
-        self.path = generate_manga_path(self.name)
-    
-    def saver(self, source: str):
-        Search(self.name, self.link, self.cover, self.team, source).save()
+    latestChapters: List[LatestChapters]
 
-        PathManga(source, self.path, self.link).add_path()
-        
-@dataclass
+    def saver(self, source: str):
+        path = generate_manga_path(self.name)
+        Search(self.name, self.link, self.cover, self.team, source).save()
+        PathManga(source, path, self.link).add_path()
+        self.path = f"/v2/source/{source}/{path}"
+
+
 class Home(BaseModel):
     mangaData: List[MangaDetails]
     nextUrl: Optional[str]
 
+
 # ======================================
-@dataclass
 class MangaInfo(BaseModel):
-    name: str 
-    cover: str    
+    name: str
+    cover: str
     genres: List[str]
     aboutStory: str
     totalChapters: Optional[str] = None
 
-@dataclass
+
 class ChapterDetails(BaseModel):
     number: str
-    link: str 
-    path: str = field(init=False)
+    link: str
+    path: Optional[str] = None
     title: str
     date: str
 
-    def __post_init__(self):
-        self.path = generate_manga_path(self.number)
+    def saver(self, source: str, manga_path: str):
+        if self.number:
+            PathChapter(source, manga_path, self.number, self.link).add_path()
+            self.path = f"/v2/source/{source}/{manga_path}/{self.number}"
 
-    def saver(self, source: str, path_chapter: str):
-        PathChapter(source, path_chapter, self.number, self.link).add_path()
 
-
-@dataclass
 class Manga(BaseModel):
     mangaList: MangaInfo
     chapters: List[ChapterDetails]
     nextPageLink: Optional[str] = None
 
-# ==================================================
-@dataclass
-class Chapter(BaseModel):
-    title: str 
-    imageUrls: List[str]
-    nextLink: Optional[str]
-    prevLink: Optional[str]
 
+# ==================================================
+
+
+class NavigationLink(BaseModel):
+    chapterUrl: Optional[str] = None
+    path: Optional[str] = None
+
+    def saver(self, source: str, manga_path: str, number: Optional[str]):
+        if number and self.chapterUrl:
+            PathChapter(source, manga_path, number, self.chapterUrl).add_path()
+            self.path = f"/v2/source/{source}/{manga_path}/{number}"
+
+
+class Chapter(BaseModel):
+    title: str
+    imageUrls: List[str]
+    nextNavigation: Optional[NavigationLink] = None
+    prevNavigation: Optional[NavigationLink] = None

@@ -1,17 +1,17 @@
 from fastapi import APIRouter
-from ..dependencies import handle_manga_request
+from ..dependencies.V2 import handle_manga_chapter
 
 router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+
 @router.get(
-    "/{source}/{mangaPath}", tags=["Manga"], 
-    summary="Retrieve Manga Data", 
+    "/source/{source}/{mangaPath}",
+    tags=["Manga"],
+    summary="Retrieve Manga Data",
     response_description="Successful Response with Manga Data",
-    description=(
-        "**Retrieve the manga data for a specified source and manga path.**"
-    ),
+    description=("**Retrieve the manga data for a specified source and manga path.**"),
 )
 async def read_manga_path(source: str, mangaPath: str):
     """
@@ -24,4 +24,4 @@ async def read_manga_path(source: str, mangaPath: str):
     Returns:
     - Dict[str, Any]: A dictionary with the success status, source name, and the manga data.
     """
-    return await handle_manga_request(source, mangaPath)
+    return await handle_manga_chapter(source, mangaPath)

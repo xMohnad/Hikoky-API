@@ -8,7 +8,7 @@ servers = [
     {"url": "/", "description": "Get Available Sources"},
     {"url": "/v1", "description": "First Edition (V1)"},
     {"url": "/v2", "description": "Second Edition (V2)"},
-    {"url": "/search", "description": "Search Endpoint"}
+    {"url": "/search", "description": "Search Endpoint"},
 ]
 
 app = FastAPI(
@@ -28,20 +28,23 @@ app = FastAPI(
         "### Search Endpoint:\n"
         "Search for manga across various sources using this endpoint. Refer to the [documentation](/search/docs) for more details.\n\n"
         "## Contact\n"
-        "For support or further information, you can contact us through our [Twitter](https://twitter.com/your_twitter_handle).\n"
+        "For support or further information, you can contact us through our [Twitter](https://x.com/).\n"
     ),
     version="2.0.0",
     servers=servers,
     contact={
         "name": "API Support",
-        "twitter": "https://twitter.com/your_twitter_handle"
-    }
+        "twitter": "https://x.com/",
+    },
 )
 
-@app.get("/", 
-        tags=["Sources"],
-        summary="Get Available Sources",
-        response_description="List of available sources.")
+
+@app.get(
+    "/",
+    tags=["Sources"],
+    summary="Get Available Sources",
+    response_description="List of available sources.",
+)
 async def list_sources():
     """
     Retrieve the list of available manga sources.
@@ -49,7 +52,8 @@ async def list_sources():
     Returns:
         dict: Success status and data containing the list of sources.
     """
-    return {'success': True, "data": get_sources}
+    return {"success": True, "data": get_sources}
+
 
 app.mount("/v1", app_v1)
 app.mount("/v2", app_v2)

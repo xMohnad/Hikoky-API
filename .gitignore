@@ -14,8 +14,8 @@ venv.bak/
 
 # Ignore test files
 test/
-test.db
 data.py
+*.db
 
 # Ignore system files
 .DS_Store

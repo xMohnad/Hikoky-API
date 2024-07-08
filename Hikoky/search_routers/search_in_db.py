@@ -1,5 +1,3 @@
-
-
 from fastapi import APIRouter, HTTPException
 from Hikoky.models import Search
 from typing import Optional
@@ -9,9 +7,11 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-@router.get("/db"
-)
-async def search_in_source_or_all_sources_in_database(keyword: str, source: Optional[str] = None):
+
+@router.get("/db")
+async def search_in_source_or_all_sources_in_database(
+    keyword: str, source: Optional[str] = None
+):
     """
     Search for a specific keyword in a specified source or across all sources in the database.
 
@@ -26,19 +26,11 @@ async def search_in_source_or_all_sources_in_database(keyword: str, source: Opti
         HTTPException: If no results are found.
     """
 
-    try:
-        results = Search.perform_search(source, keyword)
-        return results
-
-    except HTTPException as e:
-        return {"success": False, **e.detail}
-
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+    results = Search.perform_search(source, keyword)
+    return results
 
 
-@router.get("/db/all"
-)
+@router.get("/db/all")
 async def get_all_search_in_database():
     """
     Retrieve all search entries from the database.

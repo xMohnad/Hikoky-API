@@ -1,20 +1,13 @@
-from fastapi import APIRouter, Query
-from ..dependencies import get_handler, fetch_data
+from fastapi import APIRouter, Query, HTTPException
+from ..dependencies.dependencies import home_data, more_data_home
 
 router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-router = APIRouter()
-
-async def fetch_and_process_data(identifier: str):
-    url, handler = await get_handler(identifier)
-    result = await fetch_data(url)
-    results = handler["home_page"](result)
-    return {'success': True, "source": handler["name"], "data": results}
 
 @router.get(
-    "/{source}", 
+    "/source/{source}",
     tags=["Home"],
     summary="Retrieve Home Page Data",
     response_description=(
@@ -23,7 +16,6 @@ async def fetch_and_process_data(identifier: str):
         "- **success (bool)**: Indicates whether the data retrieval was successful.\n"
         "- **source (str)**: The name of the source.\n"
         "- **data (dict)**: The home page data retrieved from the source.\n\n\n\n"
-
     ),
     description=(
         "**Retrieve the home page data for a specified source.**\n\n"
@@ -38,11 +30,9 @@ async def fetch_and_process_data(identifier: str):
         "```\n"
         "GET /source/my-source\n"
         "```\n\n"
-    )
+    ),
 )
-async def home_source(
-    source: str
-):
+async def home_source(source: str):
     """
     Retrieve the home page data for a specified source.
 
@@ -52,11 +42,11 @@ async def home_source(
     Returns:
     - dict: A dictionary with the success status, the source name, and the home page data.
     """
-    return await fetch_and_process_data(source)
+    return await home_data(source)
 
 
 @router.get(
-    "/nextPage/", 
+    "/nextPage",
     tags=["Home"],
     summary="Retrieve Next Page Data",
     response_description=(
@@ -71,25 +61,22 @@ async def home_source(
         "This endpoint allows you to fetch the subsequent set of data from the next page URL provided by the source. It helps in paginating through the data provided by the source.\n\n"
         "### Features:\n"
         "- Fetch data from the next page URL.\n"
-        "- Supports pagination for large datasets.\n"
         "- Continues data retrieval from where the previous request left off.\n\n"
         "### Usage:\n"
         "- **nextPageUrl (str)**: The URL of the next page to fetch more data.\n\n"
         "### Examples:\n"
         "```\n"
-        "GET /nextPage/?nextPageUrl=next-page-url\n"
+        "GET /nextPage?nextPageUrl=next-page-url\n"
         "```\n\n"
-    )
+    ),
 )
-async def home_next_page(
-        nextPageUrl: str = Query(
-        ..., 
+async def next_page_home(
+    nextPageUrl: str = Query(
+        ...,
         title="Next Page URL",
         description="The URL of the next page to fetch more data.",
-        min_length=1,
-        max_length=2083,
-        regex=r'^https?://',
-        example="https://3asq.org/manga/page/2/"
+        regex=r"^https?://",
+        example="https://3asq.org/manga/page/2/",
     )
 ):
     """
@@ -101,4 +88,4 @@ async def home_next_page(
     Returns:
     - dict: A dictionary with the success status, the source name, and the next page data.
     """
-    return await fetch_and_process_data(nextPageUrl)
+    return await more_data_home(nextPageUrl)

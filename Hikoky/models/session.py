@@ -11,7 +11,7 @@ class Database:
     @classmethod
     def init_db(cls, db_url: str = 'sqlite:///Hikoky/models/database/Hikoky.db'):
         if cls.engine is None:
-            cls.engine = create_engine(db_url, echo=True)
+            cls.engine = create_engine(db_url, echo=False)
             Base.metadata.create_all(cls.engine)
             cls.Session = scoped_session(sessionmaker(bind=cls.engine))
 

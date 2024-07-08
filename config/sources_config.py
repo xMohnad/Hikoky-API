@@ -1,19 +1,17 @@
+from urllib.parse import urlparse
 from scraper import (
     home_teamx,
     manga_teamx,
     chapter_teamx,
     home3asq,
     manga3asq,
-    chapter3asq
+    chapter3asq,
 )
 
-from scraper import (
-    search_teamx,
-    search3asq
-)
+from scraper import search_teamx, search3asq
 
 from typing import List, Dict
-from typing import Optional, Union, Dict, Any
+from typing import Dict, Any
 
 
 # Dictionary containing source handlers
@@ -32,21 +30,19 @@ source_handlers = [
         "logo_url": "https://static.gameloop.com/img/34ea0309b0bbf020fa3f1be037b3baf7.png?imageMogr2/thumbnail/172.8x172.8/format/webp",
         "home_page": home3asq,
         "manga_page": manga3asq,
-        "chapter_page": chapter3asq
-    }
+        "chapter_page": chapter3asq,
+    },
 ]
-
-# Define searchHandlers dictionary
 
 """
 Extract useful information for API users from source handlers.
 """
 get_sources = [
     {
-        'name': handler['name'],
-        'query_param': handler['name'],
-        'base_url': handler.get('base_url'),
-        'logo_url': handler.get('logo_url'),
+        "name": handler["name"],
+        "query_param": handler["name"],
+        "base_url": handler.get("base_url"),
+        "logo_url": handler.get("logo_url"),
     }
     for handler in source_handlers
 ]
@@ -58,12 +54,12 @@ search_handlers = [
         "method": "GET",
         "search": search_teamx,
         "headers": {
-            'authority': 'www.teamxnovel.com',
-            'accept': '*/*',
-            'accept-language': 'ar-EG,ar;q=0.9,en-US;q=0.8,en;q=0.7',
-            'content-type': 'application/json;charset=UTF-8'
+            "authority": "www.teamxnovel.com",
+            "accept": "*/*",
+            "accept-language": "ar-EG,ar;q=0.9,en-US;q=0.8,en;q=0.7",
+            "content-type": "application/json;charset=UTF-8",
         },
-        "params": lambda keyword: {'keyword': keyword},
+        "params": lambda keyword: {"keyword": keyword},
     },
     {
         "name": "3asq",
@@ -74,14 +70,14 @@ search_handlers = [
             "Accept": "application/json, text/javascript, */*; q=0.01",
             "Accept-Language": "ar-EG,ar;q=0.9,en-US;q=0.8,en;q=0.7",
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "Sec-Ch-Ua": "\"Not-A.Brand\";v=\"99\", \"Chromium\";v=\"124\"",
+            "Sec-Ch-Ua": '"Not-A.Brand";v="99", "Chromium";v="124"',
             "Sec-Ch-Ua-Mobile": "?1",
-            "Sec-Ch-Ua-Platform": "\"Android\"",
+            "Sec-Ch-Ua-Platform": '"Android"',
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "X-Requested-With": "XMLHttpRequest"
+            "X-Requested-With": "XMLHttpRequest",
         },
         "data": lambda keyword: {"action": "wp-manga-search-manga", "title": keyword},
-    }
+    },
 ]

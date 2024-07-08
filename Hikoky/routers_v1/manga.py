@@ -1,22 +1,20 @@
-from fastapi import APIRouter, Query
-from ..dependencies import get_handler, fetch_data
+from fastapi import APIRouter, Query, HTTPException
+from ..dependencies.V1 import handle_manchap
 
-router = APIRouter(
-    tags=["Manga"],
-    responses={404: {"description": "Not found"}}
-)
+router = APIRouter(tags=["Manga"], responses={404: {"description": "Not found"}})
+
 
 @router.get(
-    "/manga", 
+    "/manga",
     # response_model=Manga,
-    summary="Get Manga Page", 
-    response_description="Manga page data for the specified source."
+    summary="Get Manga Page",
+    response_description="Manga page data for the specified source.",
 )
 async def manga(
     mangaURL: str = Query(
-        ..., 
-        title="Manga Page URL", 
-        description="The URL for the manga page. Provide this URL to fetch the manga page data."
+        ...,
+        title="Manga Page URL",
+        description="The URL for the manga page. Provide this URL to fetch the manga page data.",
     )
 ):
     """
@@ -29,8 +27,7 @@ async def manga(
     - dict: A dictionary containing the success status, the source name, and the data from the manga page.
     """
 
-    url, handler = await get_handler(mangaURL)
-    result = await fetch_data(url)
-    results = handler["manga_page"](result)
-
-    return {'success': True, "source": handler["name"], "data": results}
+    try:
+        return await handle_manchap(mangaURL)
+    except HTTPException as e:
+        raise e

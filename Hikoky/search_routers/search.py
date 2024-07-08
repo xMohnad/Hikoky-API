@@ -1,16 +1,16 @@
-
 from fastapi import APIRouter, HTTPException
-from ..dependencies import handle_search, handle_search_in_all_sources
+from ..dependencies.search import handle_search, handle_search_in_all_sources
 
 router = APIRouter(
     tags=["Search"],
     responses={404: {"description": "Not found"}},
 )
 
+
 @router.get(
     "/",
-    summary="Search in Source or All Sources", 
-    response_description="Search results for the specified source or all sources."
+    summary="Search in Source or All Sources",
+    response_description="Search results for the specified source or all sources.",
 )
 async def search(keyword: str, source: str = None) -> dict:
     """
@@ -27,16 +27,9 @@ async def search(keyword: str, source: str = None) -> dict:
         - data (list): The search results.
     """
 
-    try:
-        if source:
-            results = await handle_search(keyword, source)
-            return {"success": True, "source": source, "data": results}
-        else:
-            results = await handle_search_in_all_sources(keyword)
-            return {"success": True, "data": results}
-
-    except HTTPException as e:
-        return {"success": False, **e.detail}
-
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+    if source:
+        results = await handle_search(keyword, source)
+        return {"success": True, "source": source, "data": results}
+    else:
+        results = await handle_search_in_all_sources(keyword)
+        return {"data": results}
