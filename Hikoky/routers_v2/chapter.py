@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from ..dependencies.V2 import handle_manga_chapter
+from ..dependencies import handle_manga_chapter
 
 router = APIRouter(
     responses={404: {"description": "Not found"}},
@@ -30,13 +30,11 @@ async def read_chapter_path(source: str, mangaPath: str, chapterPath: str):
     return await handle_manga_chapter(source, mangaPath, chapterPath)
 
 
-from ..models.paths import PathChapter
+# from ..models.paths import PathChapter
+# @router.get(
+#     "/all/",
+#     tags=["Chapter"],
+# )
+# async def all_data():
 
-
-@router.get(
-    "/all/",
-    tags=["Chapter"],
-)
-async def all_data():
-
-    return PathChapter.get_all_data()
+#     return PathChapter.get_all_data()

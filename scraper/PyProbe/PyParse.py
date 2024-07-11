@@ -131,5 +131,5 @@ async def pyparse(
                 await asyncio.sleep(sleep_time)
 
         raise HTTPException(
-            status_code=404, detail={"success": False, "error": error_message}
+            status_code=400, detail={"success": False, "error": error_message}
         )

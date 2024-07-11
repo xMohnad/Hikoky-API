@@ -86,6 +86,7 @@ class PathChapter(Base):
         self.link = link
 
     def add_path(self):
+
         with Database.get_session() as session:
             session.merge(self)
             session.commit()

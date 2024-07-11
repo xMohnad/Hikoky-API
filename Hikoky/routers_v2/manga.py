@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from ..dependencies.V2 import handle_manga_chapter
+from ..dependencies import handle_manga_chapter
 
 router = APIRouter(
     responses={404: {"description": "Not found"}},

@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Query
-from ..dependencies.V1 import handle_manchap
 
-# إنشاء APIRouter مع إعدادات الوسوم والاستجابات المخصصة
-router = APIRouter(
-    tags=["Chapter"],
-    responses={404: {"description": "Not found"}},
-)
+from Hikoky.dependencies import get_module_by_url
+from scraper.PyProbe.PyParse import pyparse
+
+
+router = APIRouter(tags=["Chapter"], responses={404: {"description": "Not found"}})
 
 
 @router.get(
@@ -19,6 +18,7 @@ async def chapter(
         ...,
         title="Chapter Page URL",
         description="URL for the chapter page. Provide this URL to fetch the chapter page data.",
+        example="https://3asq.org/manga/jujutsu-kaisen/256/",
     )
 ):
     """
@@ -34,4 +34,8 @@ async def chapter(
         - data (dict): The data fetched from the chapter page.
     """
 
-    return await handle_manchap(chapterURL, chapter=True)
+    source = await get_module_by_url(chapterURL)
+    result = await pyparse(chapterURL)
+    results = await source.chapter(result, chapterURL)
+
+    return {"success": True, "source": source.source, "data": results}

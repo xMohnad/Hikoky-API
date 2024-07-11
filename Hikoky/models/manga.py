@@ -52,7 +52,7 @@ class ChapterDetails(BaseModel):
     date: str
 
     def saver(self, source: str, manga_path: str):
-        if self.number:
+        if self.number and manga_path:
             PathChapter(source, manga_path, self.number, self.link).add_path()
             self.path = f"/v2/source/{source}/{manga_path}/{self.number}"
 
@@ -64,14 +64,12 @@ class Manga(BaseModel):
 
 
 # ==================================================
-
-
 class NavigationLink(BaseModel):
     chapterUrl: Optional[str] = None
     path: Optional[str] = None
 
     def saver(self, source: str, manga_path: str, number: Optional[str]):
-        if number and self.chapterUrl:
+        if number and self.chapterUrl and manga_path:
             PathChapter(source, manga_path, number, self.chapterUrl).add_path()
             self.path = f"/v2/source/{source}/{manga_path}/{number}"
 

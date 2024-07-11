@@ -1,7 +1,9 @@
-from bs4 import BeautifulSoup
-import re
 import logging
-
+import re
+from typing import Optional
+from bs4 import BeautifulSoup
+from scraper import pyparse
+from scraper.utils import Failed_retrieve, notfound
 from Hikoky.models import (
     Home,
     Manga,
@@ -14,10 +16,11 @@ from Hikoky.models import (
     NavigationLink,
 )
 
-from typing import Optional
+source = "3asq"
+base_url = "https://3asq.org/manga/"
 
 
-def home3asq(soup: BeautifulSoup, source: str):
+async def home(soup: BeautifulSoup):
     items = soup.find_all("div", class_="page-item-detail")
     data_mangas = []
 
@@ -45,7 +48,7 @@ def home3asq(soup: BeautifulSoup, source: str):
         for chapter_tag in chapters_tags[:2]:
             chapter_url = chapter_tag.find("a")["href"]
             chapter_text = chapter_tag.find("a").text.strip()
-            chapter_num = extract_chapter_number(chapter_text)
+            chapter_num = await extract_chapter_number(chapter_text)
 
             latest_chapters = LatestChapters(num=chapter_num, url=chapter_url)
             latest_chapters.saver(source, name)
@@ -57,23 +60,23 @@ def home3asq(soup: BeautifulSoup, source: str):
         manga_data.saver(source)
         data_mangas.append(manga_data)
 
-    next_url = extract_next_page_url(soup)
+    next_url = await extract_next_page_url(soup)
     return Home(mangaData=data_mangas, nextUrl=next_url)
 
 
-def extract_chapter_number(text):
+async def extract_chapter_number(text):
     match = re.match(r"^\D*(\d+)", text)
     return match.group(1) if match else text
 
 
-def extract_next_page_url(soup):
+async def extract_next_page_url(soup):
     div_tag = soup.find("div", class_="nav-previous float-left")
     aTag = div_tag.find("a") if div_tag else None
     return aTag["href"] if aTag else None
 
 
 # ===============================================================================================
-def extract_chapter_info(title):
+async def extract_chapter_info(title):
     match = re.match(r"(\d+(\.\d+)?[A-Za-z]*)\s*-\s*(.*)", title)
     if match:
         chapter_number = re.sub(r"[A-Z]", "", match.group(1))
@@ -85,22 +88,19 @@ def extract_chapter_info(title):
     return chapter_number, chapter_title
 
 
-def manga3asq(
-    soup: BeautifulSoup, source: str, manga_path: str = None, v1=False
-) -> Manga:
+async def manga(soup: BeautifulSoup, manga_path: str = None) -> Manga:
     name = soup.find("div", class_="post-title").find("h1").text.strip()
+
     about_story = soup.find("div", class_="manga-excerpt")
     if about_story:
         about_story = about_story.p.get_text(strip=True)
     else:
         about_story = "N/A"
-
     genres = [
         a.get_text(strip=True)
         for a in soup.find("div", class_="genres-content").find_all("a")
     ]
     cover_manga = soup.find("div", class_="summary_image").find("img")["src"]
-
     info_manga = MangaInfo(
         name=name,
         cover=cover_manga,
@@ -110,7 +110,7 @@ def manga3asq(
 
     chapters = []
     ul = soup.select_one(
-        "body > div.wrap > div > div.site-content > div > div.c-page-content.style-1 > div > div > div > div.main-col.col-md-8.col-sm-8 > div > div.c-page > div > div.page-content-listing.single-page > div > ul"
+        "div.main-col.col-md-8.col-sm-8 > div > div.c-page > div > div.page-content-listing.single-page > div > ul"
     )
     for li in ul.find_all("li", class_="wp-manga-chapter"):
         aTag = li.find("a")
@@ -118,7 +118,7 @@ def manga3asq(
         date = li.find("span", class_="chapter-release-date").get_text(strip=True)
 
         chapterTitleText = aTag.text.strip()
-        chapter_number, chapter_title = extract_chapter_info(chapterTitleText)
+        chapter_number, chapter_title = await extract_chapter_info(chapterTitleText)
         chapter_details = ChapterDetails(
             number=chapter_number,
             link=chapter_url,
@@ -126,9 +126,7 @@ def manga3asq(
             date=date,
         )
 
-        if not v1:
-            chapter_details.saver(source, manga_path)
-
+        chapter_details.saver(source, manga_path)
         chapters.append(chapter_details)
 
     return Manga(
@@ -138,6 +136,51 @@ def manga3asq(
 
 
 # ====================================================================================
+async def chapter(soup: BeautifulSoup, url: str, manga_path=None) -> Chapter:
+    img_tag = soup.select(".page-break img.wp-manga-chapter-img")
+    image_urls = [img["src"].strip() for img in img_tag]
+
+    if not image_urls:
+        logging.error("No images found in the chapter.")
+
+    active_li = soup.find("li", class_="active")
+    title = active_li.text.strip() if active_li else None
+    if not title:
+        logging.error("Active chapter title not found.")
+
+    next_navigation, prev_navigation = extract_chapter_links(soup, manga_path)
+
+    return Chapter(
+        title=title,
+        imageUrls=image_urls,
+        nextNavigation=next_navigation,
+        prevNavigation=prev_navigation,
+    )
+
+
+def extract_chapter_links(soup: BeautifulSoup, manga_path: str) -> tuple:
+    def get_chapter_link(nav_links: BeautifulSoup, class_name: str) -> Optional[str]:
+        try:
+            link_tag = nav_links.find("a", class_=class_name)
+            return link_tag["href"] if link_tag else None
+        except (TypeError, KeyError, AttributeError):
+            return None
+
+    def create_navigation_link(
+        nav_links: BeautifulSoup, class_name: str
+    ) -> NavigationLink:
+        chapter_link = get_chapter_link(nav_links, class_name)
+        navigation = NavigationLink(chapterUrl=chapter_link)
+        chapter_num = get_num(chapter_link)
+        navigation.saver(source=source, manga_path=manga_path, number=chapter_num)
+        return navigation
+
+    nav_links = soup.find("div", class_="nav-links")
+
+    next_navigation = create_navigation_link(nav_links, "btn next_page")
+    prev_navigation = create_navigation_link(nav_links, "btn prev_page")
+
+    return next_navigation, prev_navigation
 
 
 def get_num(url: str) -> Optional[str]:
@@ -152,53 +195,42 @@ def get_num(url: str) -> Optional[str]:
     return None
 
 
-def chapter3asq(
-    soup: BeautifulSoup, url: str, source: str, manga_path=None, v1=False
-) -> Chapter:
-    img_tag = soup.select(".page-break img.wp-manga-chapter-img")
-    image_urls = [img["src"].strip() for img in img_tag]
+# ==============================================
+async def search(keyword: str):
+    url = "https://3asq.org/wp-admin/admin-ajax.php"
+    data = {
+        "action": "wp-manga-search-manga",
+        "title": keyword,
+    }
 
-    if not image_urls:
-        logging.error("No images found in the chapter.")
+    response = await pyparse(url=url, max_retries=1, method="POST", data=data)
 
-    activeLi = soup.find("li", class_="active")
-    if activeLi:
-        title = activeLi.text.strip()
+    if response.get("success", False):
+        result = response.get("data", [])
+        if result:
+            data = []
+            for manga in result:
+                title = manga.get("title")
+                link = manga.get("url")
+                type_ = manga.get("type")
+                data.append(
+                    {
+                        "title": title,
+                        "link": link,
+                        "cover": None,
+                        "type": type_,
+                        "badge": None,
+                    }
+                )
+            return {"source": source, "data": data}
     else:
-        title = None
-        logging.error("Active chapter title not found.")
+        error_data = response.get("data", [{}])[0]
+        error_type = error_data.get("error", "Failed to retrieve data")
+        if error_type == "not found":
+            raise await notfound(source)
+        else:
+            logging.error(f"Failed to retrieve data in {source}")
+            raise await Failed_retrieve(source)
 
-    def get_chapter_link(nav_links: BeautifulSoup, class_name: str) -> Optional[str]:
-        try:
-            link_tag = nav_links.find("a", class_=class_name)
-            return link_tag["href"] if link_tag else None
-        except (TypeError, KeyError, AttributeError):
-            return None
 
-    nav_links = soup.find("div", class_="nav-links")
-
-    next_chapter_link = get_chapter_link(nav_links, "btn next_page")
-    prev_chapter_link = get_chapter_link(nav_links, "btn prev_page")
-
-    if next_chapter_link:
-        next_navigation = NavigationLink(chapterUrl=next_chapter_link)
-        next_num = get_num(next_chapter_link)
-        if not v1:
-            next_navigation.saver(source=source, manga_path=manga_path, number=next_num)
-    else:
-        next_navigation = None
-
-    if prev_chapter_link:
-        prev_navigation = NavigationLink(chapterUrl=prev_chapter_link)
-        prev_num = get_num(prev_chapter_link)
-        if not v1:
-            prev_navigation.saver(source=source, manga_path=manga_path, number=prev_num)
-    else:
-        prev_navigation = None
-
-    return Chapter(
-        title=title,
-        imageUrls=image_urls,
-        nextNavigation=next_navigation,
-        prevNavigation=prev_navigation,
-    )
+""

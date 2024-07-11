@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Query, HTTPException
-from ..dependencies.dependencies import home_data, more_data_home
+from fastapi import APIRouter, Query
+from ..dependencies import home_data, more_data_home
 
 router = APIRouter(
     responses={404: {"description": "Not found"}},

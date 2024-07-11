@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Query
 
-from ..dependencies.dependencies import home_data, more_data_home
+from ..dependencies import home_data, more_data_home
 
-router = APIRouter(
-    responses={404: {"description": "Not found"}},
-)
+router = APIRouter(responses={404: {"description": "Not found"}})
 
 
 @router.get(

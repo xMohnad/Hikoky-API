@@ -1,5 +1,8 @@
-from fastapi import APIRouter, Query, HTTPException
-from ..dependencies.V1 import handle_manchap
+from fastapi import APIRouter, Query
+
+from Hikoky.dependencies import get_module_by_url
+from scraper import pyparse
+
 
 router = APIRouter(tags=["Manga"], responses={404: {"description": "Not found"}})
 
@@ -15,6 +18,7 @@ async def manga(
         ...,
         title="Manga Page URL",
         description="The URL for the manga page. Provide this URL to fetch the manga page data.",
+        example="https://3asq.org/manga/jujutsu-kaisen/",
     )
 ):
     """
@@ -27,7 +31,8 @@ async def manga(
     - dict: A dictionary containing the success status, the source name, and the data from the manga page.
     """
 
-    try:
-        return await handle_manchap(mangaURL)
-    except HTTPException as e:
-        raise e
+    source = await get_module_by_url(mangaURL)
+    result = await pyparse(mangaURL)
+    results = await source.manga(result)
+
+    return {"success": True, "source": source.source, "data": results}

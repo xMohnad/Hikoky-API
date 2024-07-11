@@ -3,6 +3,7 @@ from config import get_sources
 from .routers_v1.main_v1 import app_v1
 from .routers_v2.main_v2 import app_v2
 from .search_routers.main_search import search
+import json
 
 servers = [
     {"url": "/", "description": "Get Available Sources"},
@@ -28,13 +29,13 @@ app = FastAPI(
         "### Search Endpoint:\n"
         "Search for manga across various sources using this endpoint. Refer to the [documentation](/search/docs) for more details.\n\n"
         "## Contact\n"
-        "For support or further information, you can contact us through our [Twitter](https://x.com/).\n"
+        "For support or further information, you can contact us through our [Twitter](https://x.com/xMohnad13?t=mRA6tFAcs32yfNjPPX5XTQ&s=09).\n"
     ),
     version="2.0.0",
     servers=servers,
     contact={
         "name": "API Support",
-        "twitter": "https://x.com/",
+        "twitter": "https://x.com/xMohnad13?t=mRA6tFAcs32yfNjPPX5XTQ&s=09",
     },
 )
 
@@ -44,15 +45,15 @@ app = FastAPI(
     tags=["Sources"],
     summary="Get Available Sources",
     response_description="List of available sources.",
+    description=(
+        "### Retrieve the list of available manga sources.\n\n"
+        "This endpoint returns a list of available manga sources, each with its details such as base URL, logo URL, name, "
+        "and endpoints for version 1 and version 2 of the API.\n\n"
+    ),
 )
 async def list_sources():
-    """
-    Retrieve the list of available manga sources.
-
-    Returns:
-        dict: Success status and data containing the list of sources.
-    """
-    return {"success": True, "data": get_sources}
+    with open("index.json") as f:
+        return json.load(f)
 
 
 app.mount("/v1", app_v1)
