@@ -27,7 +27,10 @@ async def read_chapter_path(source: str, mangaPath: str, chapterPath: str):
     Returns:
     - Dict[str, Any]: A dictionary with the success status, source name, and the chapter data.
     """
-    return await handle_manga_chapter(source, mangaPath, chapterPath)
+
+    result = await handle_manga_chapter(source, mangaPath, chapterPath)
+
+    return result
 
 
 # from ..models.paths import PathChapter

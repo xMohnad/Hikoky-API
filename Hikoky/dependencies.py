@@ -5,7 +5,8 @@ from urllib.parse import urlparse
 import importlib.util
 import os
 import textdistance
-from .models.paths import PathManga, PathChapter
+
+from .models.paths import get_link_chapter, get_link_manga
 from typing import Dict, Any, Optional
 
 
@@ -79,7 +80,7 @@ async def home_data(source: str):
     result = await pyparse(source.base_url)
 
     results = await source.home(result)
-    return {"success": True, "source": source.source, "data": results}
+    return {"success": True, "data": results}
 
 
 async def more_data_home(next_page_url: str):
@@ -87,7 +88,7 @@ async def more_data_home(next_page_url: str):
     result = await pyparse(next_page_url)
 
     results = await source.home(result)
-    return {"success": True, "source": source.source, "data": results}
+    return {"success": True, "data": results}
 
 
 # ===============================================================
@@ -111,12 +112,12 @@ async def handle_manga_chapter(
     source = await load_source(source_name)
 
     if mangaPath and not chapterPath:
-        link = PathManga.get_link(source_name, mangaPath)
+        link = get_link_manga(source_name, mangaPath)
         result = await pyparse(link)
         results = await source.manga(result, mangaPath)
 
     elif mangaPath and chapterPath:
-        link = PathChapter.get_link(source_name, mangaPath, chapterPath)
+        link = get_link_chapter(source_name, mangaPath, chapterPath)
         result = await pyparse(link)
         results = await source.chapter(result, link, mangaPath)
     else:
@@ -129,6 +130,5 @@ async def handle_manga_chapter(
                 "data": [],
             },
         )
-    source = source.source
 
-    return {"success": True, "source": source, "data": results}
+    return {"success": True, "data": results}

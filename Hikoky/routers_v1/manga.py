@@ -35,4 +35,4 @@ async def manga(
     result = await pyparse(mangaURL)
     results = await source.manga(result)
 
-    return {"success": True, "source": source.source, "data": results}
+    return {"success": True, "data": results}

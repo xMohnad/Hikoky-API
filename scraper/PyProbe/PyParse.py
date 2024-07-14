@@ -46,7 +46,7 @@ async def pyparse(
     data=None,
     max_retries=3,
     delay=1,
-    timeout=6,
+    timeout=10,
 ):
     """Make a request to the specified URL using httpx async client."""
     async with httpx.AsyncClient() as client:

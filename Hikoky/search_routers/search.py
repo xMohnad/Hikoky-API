@@ -11,14 +11,15 @@ async def search_in_source(keyword, source):
 
 async def search_in_all_sources(keyword: str) -> List[Dict[str, Any]]:
     results = []
-    for source in list_sources():
+    sources = await list_sources()
+    for source in sources:
         try:
             source = await load_source(source)
             search_result = await source.search(keyword)
-            results.append({"source": source.source, "data": search_result})
+            results.append({"data": search_result})
 
         except HTTPException as e:
-            results.append(e.detail)
+            results.append({"status_code": e.status_code, "error": e.detail})
 
     if not results:
         raise HTTPException(status_code=404, detail=results)
@@ -53,7 +54,7 @@ async def search(keyword: str, source: str = None) -> dict:
 
     if source:
         results = await search_in_source(keyword=keyword, source=source)
-        return {"success": True, "source": source, "data": results}
+        return {"success": True, "data": results}
     else:
         results = await search_in_all_sources(keyword)
-        return {"data": results}
+        return {"results": results}

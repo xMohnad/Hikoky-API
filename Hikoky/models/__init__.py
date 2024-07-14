@@ -1,5 +1,3 @@
-from .search import Search
-
 from .manga import (
     # Home page for displaying manga for the source
     Home,
@@ -14,14 +12,4 @@ from .manga import (
     NavigationLink,
 )
 
-__all__ = [
-    "Home",
-    "MangaDetails",
-    "LatestChapters",
-    "Manga",
-    "MangaInfo",
-    "ChapterDetails",
-    "Chapter",
-    "NavigationLink",
-    "Search",
-]
+from .search import Search, BaseModel
