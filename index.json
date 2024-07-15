@@ -1,23 +1,23 @@
 [
     {
         "documentation": {
+            "main": "/docs",
             "version1": "/v1/docs",
-            "version2": "/v2/docs",
-            "main": "/docs"
+            "version2": "/v2/docs"
         }
     },
     {
-        "base_url": "https://www.teamxnovel.com/",
-        "logo_url": "https://www.teamxnovel.com/images/TeamX.png",
         "name": "Team-X",
-        "v1_endpoint": "/v1/home?source=Team-X",
-        "v2_endpoint": "/v2/source/Team-X"
+        "baseUrl": "https://www.teamxnovel.com/",
+        "logoUrl": "https://www.teamxnovel.com/images/TeamX.png",
+        "v1Endpoint": "/v1/home?source=Team-X",
+        "v2Endpoint": "/v2/source/Team-X"
     },
     {
-        "base_url": "https://3asq.org/manga/",
-        "logo_url": "https://static.gameloop.com/img/34ea0309b0bbf020fa3f1be037b3baf7.png?imageMogr2/thumbnail/172.8x172.8/format/webp",
         "name": "3asq",
-        "v1_endpoint": "/v1/home?source=3asq",
-        "v2_endpoint": "/v2/source/3asq"
+        "baseUrl": "https://3asq.org/manga/",
+        "logoUrl": "https://static.gameloop.com/img/34ea0309b0bbf020fa3f1be037b3baf7.png?imageMogr2/thumbnail/172.8x172.8/format/webp",
+        "v1Endpoint": "/v1/home?source=3asq",
+        "v2Endpoint": "/v2/source/3asq"
     }
 ]

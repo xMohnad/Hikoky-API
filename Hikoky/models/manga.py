@@ -5,17 +5,18 @@ from Hikoky.models.paths import insert_chapter, insert_manga
 
 
 class LatestChapters(BaseModel):
-    num: Optional[str]
-    url: Optional[str]
-    path: Optional[str] = None
+    number: Optional[str]
+    url: str
+    mangaPath: Optional[str] = None
+    chapterPath: Optional[str] = None
 
     def save(self, source: str, manga_name: str):
-        manga_path = generate_manga_path(manga_name)
-        self.path = f"/v2/source/{source}/{manga_path}/{self.num}"
+        self.mangaPath = generate_manga_path(manga_name)
+        self.chapterPath = self.number
         return {
             "source": source,
-            "manga_path": manga_path,
-            "chapter_num": self.num,
+            "manga_path": self.mangaPath,
+            "chapter_num": self.number,
             "link": self.url,
         }
 
@@ -23,14 +24,14 @@ class LatestChapters(BaseModel):
 class MangaDetails(BaseModel):
     name: str
     link: str
+    mangaPath: Optional[str] = None
     cover: str
-    path: str = None
     team: Optional[str] = None
     latestChapters: List[LatestChapters]
 
     def save(self, source: str):
+        self.mangaPath = generate_manga_path(self.name)
         path = generate_manga_path(self.name)
-        self.path = f"/v2/source/{source}/{path}"
         return {
             "source": source,
             "manga_path": path,
@@ -41,7 +42,7 @@ class MangaDetails(BaseModel):
 class Home(BaseModel):
     source: Optional[str]
     mangaData: List[MangaDetails]
-    nextUrl: Optional[str]
+    nextUrl: Optional[str] = None
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -70,13 +71,13 @@ class MangaInfo(BaseModel):
 class ChapterDetails(BaseModel):
     number: str
     link: str
-    path: Optional[str] = None
+    chapterPath: Optional[str] = None
     title: str
     date: str
 
     def save(self, source: str, manga_path: str):
+        self.chapterPath = self.number
         if self.number and manga_path:
-            self.path = f"/v2/source/{source}/{manga_path}/{self.number}"
             return {
                 "source": source,
                 "manga_path": manga_path,
@@ -87,44 +88,55 @@ class ChapterDetails(BaseModel):
 
 class Manga(BaseModel):
     source: Optional[str]
+    mangaPath: Optional[str] = None
     mangaList: MangaInfo
     chapters: List[ChapterDetails]
     nextPageLink: Optional[str] = None
 
+    def save_manga_chapter_paths(self, manga_path: str):
+        if manga_path:
+            self.mangaPath = manga_path
+            print(manga_path)
+            chapter_paths = [
+                chapter.save(self.source, manga_path) for chapter in self.chapters
+            ]
+            insert_chapter(chapter_paths)
+
 
 # ==================================================
 class NavigationLink(BaseModel):
-    chapterNum: Optional[str] = None
     chapterUrl: Optional[str] = None
-    path: Optional[str] = None
-    _path_seve: Optional[dict] = None
+    chapterPath: Optional[str] = None
 
-    def save(self, source: str, manga_path: str, number: Optional[str]):
-        if number and self.chapterUrl and manga_path:
-            self.path = f"/v2/source/{source}/{manga_path}/{number}"
-            self._path_seve = {
+    def save(self, source: str, manga_path: str):
+        if self.chapterPath and self.chapterUrl and manga_path:
+            return {
                 "source": source,
                 "manga_path": manga_path,
-                "chapter_num": number,
+                "chapter_num": self.chapterPath,
                 "link": self.chapterUrl,
             }
 
 
 class Chapter(BaseModel):
     source: Optional[str]
+    mangaPath: Optional[str] = None
     title: str
     imageUrls: List[str]
     nextNavigation: Optional[NavigationLink] = None
     prevNavigation: Optional[NavigationLink] = None
 
-    def __init__(self, **data):
-        super().__init__(**data)
-        self.save_chapter_paths()
+    def add_manga_path(self, manga_path: str):
+        self.mangaPath = manga_path
 
     def save_chapter_paths(self):
         paths = []
-        if self.nextNavigation and self.nextNavigation._path_seve:
-            paths.append(self.nextNavigation._path_seve)
-        if self.prevNavigation and self.prevNavigation._path_seve:
-            paths.append(self.prevNavigation._path_seve)
+        if self.mangaPath and self.nextNavigation:
+            paths.append(
+                self.nextNavigation.save(source=self.source, manga_path=self.mangaPath)
+            )
+        if self.mangaPath and self.prevNavigation:
+            paths.append(
+                self.prevNavigation.save(source=self.source, manga_path=self.mangaPath)
+            )
         insert_chapter(data=paths)

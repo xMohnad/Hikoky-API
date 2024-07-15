@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from .routers_v1.main_v1 import app_v1
 from .routers_v2.main_v2 import app_v2
 import json
-from .search_routers.search import router as search_in_sources
+from .common_routers.search import router as search
 
 servers = [
     {"url": "/", "description": "Get Available Sources"},
@@ -22,7 +22,7 @@ app = FastAPI(
         "### Version 1:\n"
         "Fetch data using direct links. Refer to the [documentation](/v1/docs) for more details.\n\n"
         "### Version 2:\n"
-        "Endpoints are organized by manga name and chapter number (e.g., `/mangaPath/chapterNumber`).\n\n"
+        "Endpoints are organized by manga name and chapter number (e.g., `/mangaPath/chapterPath`).\n\n"
         "## Contact\n"
         "For support or further information, you can contact us through our [Twitter](https://x.com/xMohnad13?t=mRA6tFAcs32yfNjPPX5XTQ&s=09).\n"
     ),
@@ -51,8 +51,6 @@ async def list_sources():
         return json.load(f)
 
 
-app.include_router(search_in_sources, prefix="/search")
-
-
+app.include_router(search, prefix="/search")
 app.mount("/v1", app_v1)
 app.mount("/v2", app_v2)

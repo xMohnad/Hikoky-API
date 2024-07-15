@@ -25,9 +25,9 @@ async def list_sources():
 
 async def load_source(source):
     try:
-        source = source.strip().lower()
-        source_path = os.path.join("./scraper/sources", f"{source}.py")
-        spec = importlib.util.spec_from_file_location(source, source_path)
+        lo_source = source.strip()
+        source_path = os.path.join("./scraper/sources", f"{lo_source}.py")
+        spec = importlib.util.spec_from_file_location(lo_source, source_path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         return module
@@ -114,12 +114,15 @@ async def handle_manga_chapter(
     if mangaPath and not chapterPath:
         link = get_link_manga(source_name, mangaPath)
         result = await pyparse(link)
-        results = await source.manga(result, mangaPath)
+        results = await source.manga(result)
+        results.save_manga_chapter_paths(mangaPath)
 
     elif mangaPath and chapterPath:
         link = get_link_chapter(source_name, mangaPath, chapterPath)
         result = await pyparse(link)
-        results = await source.chapter(result, link, mangaPath)
+        results = await source.chapter(result, link)
+        results.add_manga_path(mangaPath)
+        results.save_chapter_paths()
     else:
         return HTTPException(
             status_code=500,
