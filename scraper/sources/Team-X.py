@@ -9,14 +9,13 @@ from Hikoky.models import (
     Chapter,
     MangaDetails,
     LatestChapters,
-    MangaDetails,
     MangaInfo,
     ChapterDetails,
     NavigationLink,
 )
 
 source = "Team-X"
-base_url = "https://www.teamxnovel.com/"
+base_url = "https://teamoney.site/"
 
 
 async def home(soup: BeautifulSoup) -> Home:
