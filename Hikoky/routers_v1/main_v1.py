@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from . import home, manga, chapter
-from ..common_routers import next_page
+from ..common_routers import next_home_page
+from ..common_routers import next_manga_page
 
 app_v1 = FastAPI(
     title="Manga Scraper API",
@@ -10,6 +11,7 @@ app_v1 = FastAPI(
 
 
 app_v1.include_router(home.router)
-app_v1.include_router(next_page.router)
+app_v1.include_router(next_home_page.router)
 app_v1.include_router(manga.router)
+app_v1.include_router(next_manga_page.router)
 app_v1.include_router(chapter.router)

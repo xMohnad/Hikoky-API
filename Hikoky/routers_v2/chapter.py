@@ -31,13 +31,3 @@ async def read_chapter_path(source: str, mangaPath: str, chapterPath: str):
     result = await handle_manga_chapter(source, mangaPath, chapterPath)
 
     return result
-
-
-# from ..models.paths import PathChapter
-# @router.get(
-#     "/all/",
-#     tags=["Chapter"],
-# )
-# async def all_data():
-
-#     return PathChapter.get_all_data()

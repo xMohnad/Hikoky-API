@@ -4,9 +4,11 @@ from pymongo.server_api import ServerApi
 
 from fastapi import HTTPException
 import re
+from unidecode import unidecode
 
 
 def generate_manga_path(name: str):
+    name = unidecode(name)
     name = re.sub(r"[^\w\s-]", "", name, flags=re.UNICODE)
     name = name.replace(" ", "-").replace("_", "-")
     name = name.lower()
@@ -14,7 +16,6 @@ def generate_manga_path(name: str):
 
 
 database_url = os.getenv("DATABASE_URL")
-
 if database_url is None:
     raise ValueError("The DATABASE_URL environment variable is not set")
 
@@ -28,7 +29,6 @@ client = MongoClient(
 db = client["hikoky-api"]
 
 
-# ===============================================================
 def insert_manga(data):
     collection = db["MangaPath"]
     operations = [
@@ -38,6 +38,7 @@ def insert_manga(data):
             upsert=True,
         )
         for item in data
+        if item
     ]
     collection.bulk_write(operations)
 
@@ -55,11 +56,11 @@ def insert_chapter(data):
             upsert=True,
         )
         for item in data
+        if item
     ]
     collection.bulk_write(operations)
 
 
-# =============================================================
 def get_link_manga(source, manga_path):
     collection = db["MangaPath"]
     result = collection.find_one(

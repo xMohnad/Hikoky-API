@@ -18,28 +18,31 @@ source = "Team-X"
 base_url = "https://teamoney.site/"
 
 
-async def home(soup: BeautifulSoup) -> Home:
+async def home(url) -> Home:
+    soup = await pyparse(url)
+
     boxes = soup.find_all("div", class_="box")
 
     mangas = []
     for box in boxes:
         img_div = box.find("div", class_="imgu")
-        link = img_div.find("a")["href"]
-        name = img_div.find("img")["alt"]
-        cover = img_div.find("img")["src"]
 
         chapters = []
         info_div = box.find("div", class_="info")
         tagA = info_div.find_all("a")
         for chapter in tagA[1:4]:
-            chapter_url = chapter["href"]
-            chapter_num = chapter.text.strip().split()[-1]
-
-            latest_chapters = LatestChapters(number=chapter_num, url=chapter_url)
+            latest_chapters = LatestChapters(
+                number=chapter.text.strip().split()[-1], url=chapter["href"]
+            )
             chapters.append(latest_chapters)
 
         mangas.append(
-            MangaDetails(name=name, link=link, cover=cover, latestChapters=chapters)
+            MangaDetails(
+                name=img_div.find("img")["alt"],
+                link=img_div.find("a")["href"],
+                cover=img_div.find("img")["src"],
+                latestChapters=chapters,
+            )
         )
 
     next_url = await get_next_page_url(soup)
@@ -49,24 +52,23 @@ async def home(soup: BeautifulSoup) -> Home:
 """end home"""
 
 
-async def manga(soup: BeautifulSoup) -> Manga:
-    container = soup.find("div", class_="container")
+async def manga(url: str) -> Manga:
+    soup = await pyparse(url=url)
 
-    cover_manga = container.find("img", class_="shadow-sm")["src"]
+    container = soup.find("div", class_="container")
     info_box = container.find_all("div", class_="whitebox")[1]
-    name = info_box.find("div", class_="author-info-title").find("h1").text.strip()
+
     genres = info_box.find("div", class_="review-author-info")
     genres = [a.get_text(strip=True) for a in genres.find_all("a", class_="subtitle")]
-    about_story = info_box.find("div", class_="review-content").p.get_text(strip=True)
 
     chapter_text = container.find("a", class_="nav-link").text
     chapter_number = "".join(filter(str.isdigit, chapter_text))
 
     info_manga = MangaInfo(
-        name=name,
-        cover=cover_manga,
+        name=info_box.find("div", class_="author-info-title").find("h1").text.strip(),
+        cover=container.find("img", class_="shadow-sm")["src"],
         genres=genres,
-        aboutStory=about_story,
+        aboutStory=info_box.find("div", class_="review-content").p.get_text(strip=True),
         totalChapters=chapter_number,
     )
 
@@ -74,7 +76,7 @@ async def manga(soup: BeautifulSoup) -> Manga:
     chapter_urls = container.find("div", class_="eplister").find("ul")
     for chapter_item in chapter_urls.find_all("li"):
         all_info = chapter_item.find("a")
-        chapter_url = all_info["href"]
+
         chapter_text = container.find("a", class_="nav-link").text
         chapter_number = (
             all_info.find_all("div", class_="epl-num")[1].text.strip().split()[-1]
@@ -84,7 +86,7 @@ async def manga(soup: BeautifulSoup) -> Manga:
 
         chapter_details = ChapterDetails(
             number=chapter_number,
-            link=chapter_url,
+            link=all_info["href"],
             title=chapter_title if chapter_title else "N/A",
             date=date,
         )
@@ -102,7 +104,9 @@ async def manga(soup: BeautifulSoup) -> Manga:
 """end manga"""
 
 
-async def chapter(soup: BeautifulSoup) -> Chapter:
+async def chapter(url: str) -> Chapter:
+    soup = await pyparse(url=url)
+
     # Extract URL this chapter
     url = soup.find("meta", property="og:url").get("content")
 
@@ -124,7 +128,10 @@ async def chapter(soup: BeautifulSoup) -> Chapter:
     )
 
     # Extract next and previous chapter navigation links
-    next_navigation, prev_navigation = await extract_chapter_links(soup)
+    container = soup.find("div", class_="container")
+
+    prev_navigation = await create_navigation_link(container, "prev-chapter")
+    next_navigation = await create_navigation_link(container, "next-chapter")
 
     return Chapter(
         source=source,
@@ -133,18 +140,6 @@ async def chapter(soup: BeautifulSoup) -> Chapter:
         nextNavigation=next_navigation,
         prevNavigation=prev_navigation,
     )
-
-
-# Extracts the next and previous chapter navigation links.
-async def extract_chapter_links(
-    soup: BeautifulSoup,
-) -> Tuple[Optional[NavigationLink], Optional[NavigationLink]]:
-    container = soup.find("div", class_="container")
-
-    prev_navigation = await create_navigation_link(container, "prev-chapter")
-    next_navigation = await create_navigation_link(container, "next-chapter")
-
-    return next_navigation, prev_navigation
 
 
 #  --Helper functions--
@@ -189,26 +184,24 @@ async def get_next_page_url(soup: BeautifulSoup) -> Optional[str]:
 
 # Searches for manga based on a keyword.
 async def search(keyword: str):
-    url = "https://www.teamxnovel.com/ajax/search"
+    url = "https://www.teamoney.site/ajax/search"
     params = {"keyword": keyword}
     response = await pyparse(url=url, max_retries=2, params=params)
-
     if response:
         list_group = response.find("ol", class_="list-group")
         if list_group and list_group.find_all():
             results = response.find_all("li", class_="list-group-item")
             data = []
             for manga in results:
-                title = manga.find("a", class_="fw-bold").text.strip()
-                link = manga.find("a", class_="fw-bold")["href"]
-                cover = manga.find("img")["src"] if manga.find("img") else None
-                badge = (
-                    manga.find("span", class_="badge").text.strip()
-                    if manga.find("span", "badge")
-                    else None
-                )
                 search_details = SearchDetails(
-                    name=title, link=link, cover=cover, badge=badge
+                    name=manga.find("a", class_="fw-bold").text.strip(),
+                    link=manga.find("a", class_="fw-bold")["href"],
+                    cover=manga.find("img")["src"] if manga.find("img") else None,
+                    badge=(
+                        manga.find("span", class_="badge").text.strip()
+                        if manga.find("span", "badge")
+                        else None
+                    ),
                 )
                 data.append(search_details)
             return Search(source=source, results=data)

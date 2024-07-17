@@ -1,14 +1,11 @@
 # hikoky-API/Hikoky/dependencies/dependencies.py
 from fastapi import HTTPException
-from scraper import pyparse
 from urllib.parse import urlparse
 import importlib.util
 import os
 import textdistance
-
 from .models.paths import get_link_chapter, get_link_manga
 from typing import Dict, Any, Optional
-
 
 err = {"success": False}
 
@@ -23,7 +20,7 @@ async def list_sources():
     ]
 
 
-async def load_source(source):
+async def load_source(source: str):
     try:
         lo_source = source.strip()
         source_path = os.path.join("./scraper/sources", f"{lo_source}.py")
@@ -77,17 +74,15 @@ async def get_module_by_url(url):
 
 async def home_data(source: str):
     source = await load_source(source)
-    result = await pyparse(source.base_url)
 
-    results = await source.home(result)
+    results = await source.home(source.base_url)
     return {"success": True, "data": results}
 
 
 async def more_data_home(next_page_url: str):
     source = await get_module_by_url(next_page_url)
-    result = await pyparse(next_page_url)
 
-    results = await source.home(result)
+    results = await source.home(next_page_url)
     return {"success": True, "data": results}
 
 
@@ -113,14 +108,12 @@ async def handle_manga_chapter(
 
     if mangaPath and not chapterPath:
         link = get_link_manga(source_name, mangaPath)
-        result = await pyparse(link)
-        results = await source.manga(result)
+        results = await source.manga(link)
         results.save_manga_chapter_paths(mangaPath)
 
     elif mangaPath and chapterPath:
         link = get_link_chapter(source_name, mangaPath, chapterPath)
-        result = await pyparse(link)
-        results = await source.chapter(result, link)
+        results = await source.chapter(link)
         results.add_manga_path(mangaPath)
         results.save_chapter_paths()
     else:

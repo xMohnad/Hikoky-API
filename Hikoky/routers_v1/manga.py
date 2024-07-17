@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Query
 
 from Hikoky.dependencies import get_module_by_url
-from scraper import pyparse
 
 
 router = APIRouter(tags=["Manga"], responses={404: {"description": "Not found"}})
@@ -32,7 +31,6 @@ async def manga(
     """
 
     source = await get_module_by_url(mangaURL)
-    result = await pyparse(mangaURL)
-    results = await source.manga(result)
+    results = await source.manga(mangaURL)
 
     return {"success": True, "data": results}

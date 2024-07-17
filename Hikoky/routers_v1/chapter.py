@@ -35,7 +35,6 @@ async def chapter(
     """
 
     source = await get_module_by_url(chapterURL)
-    result = await pyparse(chapterURL)
-    result = await source.chapter(result)
+    result = await source.chapter(chapterURL)
 
     return {"success": True, "data": result}

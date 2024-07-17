@@ -1,5 +1,13 @@
 from fastapi import APIRouter, Query
-from ..dependencies import more_data_home
+from ..dependencies import get_module_by_url
+
+
+async def more_data_manga(next_page_url: str):
+    source = await get_module_by_url(next_page_url)
+
+    results = await source.manga(next_page_url)
+    return {"success": True, "data": results}
+
 
 router = APIRouter(
     responses={404: {"description": "Not found"}},
@@ -7,8 +15,8 @@ router = APIRouter(
 
 
 @router.get(
-    "/home/next",
-    tags=["Home"],
+    "/manga/next",
+    tags=["Manga"],
     summary="Retrieve Next Page Data",
     response_description=(
         "### **Successful Response with Next Page Data**\n\n"
@@ -16,6 +24,7 @@ router = APIRouter(
         "- **success (bool)**: Indicates whether the data retrieval was successful.\n"
         "- **source (str)**: The name of the source.\n"
         "- **data (dict)**: The next page data retrieved from the source."
+        "- **nextPageUrl (str))**: The URL of the next page to fetch more data."
     ),
     description=(
         "**Retrieve the data for the next page of a specified source.**\n\n"
@@ -27,17 +36,17 @@ router = APIRouter(
         "- **nextPageUrl (str)**: The URL of the next page to fetch more data.\n\n"
         "### Examples:\n"
         "```\n"
-        "GET /home/next?nextPageUrl=next-page-url\n"
+        "GET /manga/next?nextPageUrl=next-page-url\n"
         "```\n\n"
     ),
 )
-async def next_page_home(
+async def next_page_manga(
     nextPageUrl: str = Query(
         ...,
         title="Next Page URL",
         description="The URL of the next page to fetch more data.",
         regex=r"^https?://",
-        example="https://3asq.org/manga/page/2/",
+        example="https://teamoney.site/series/yu-ling-shi?page=2",
     )
 ):
     """
@@ -49,4 +58,4 @@ async def next_page_home(
     Returns:
     - dict: A dictionary with the success status, the source name, and the next page data.
     """
-    return await more_data_home(nextPageUrl)
+    return await more_data_manga(nextPageUrl)

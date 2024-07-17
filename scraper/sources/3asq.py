@@ -15,13 +15,14 @@ from Hikoky.models import (
     NavigationLink,
 )
 
-
 source = "3asq"
 base_url = "https://3asq.org/manga/"
 
 
 # Extracts manga details from the home page
-async def home(soup: BeautifulSoup) -> Home:
+async def home(url: str) -> Home:
+    soup = await pyparse(url=url)
+
     items = soup.find_all("div", class_="page-item-detail")
 
     mangas = []
@@ -48,13 +49,15 @@ async def home(soup: BeautifulSoup) -> Home:
 
         # Extract latest chapters
         chapters_tags = item.find_all("div", class_="chapter-item")
-        chapters = []
 
+        chapters = []
         for chapter_tag in chapters_tags[:2]:
-            chapter_url = chapter_tag.find("a")["href"]
-            chapter_text = chapter_tag.find("a").text.strip()
-            chapter_num = await extract_chapter_number(chapter_text)
-            latest_chapter = LatestChapters(number=chapter_num, url=chapter_url)
+            chapter_num = await extract_chapter_number(
+                chapter_tag.find("a").text.strip()
+            )
+            latest_chapter = LatestChapters(
+                number=chapter_num, url=chapter_tag.find("a")["href"]
+            )
             chapters.append(latest_chapter)
 
         # Append manga details to the list
@@ -87,28 +90,21 @@ async def extract_next_page_url(soup: BeautifulSoup) -> Optional[str]:
 
 
 # Extracts manga details from the manga page
-async def manga(soup: BeautifulSoup) -> Manga:
-    # Extract manga name
-    name = soup.find("div", class_="post-title").find("h1").text.strip()
+async def manga(url: str) -> Manga:
+    soup = await pyparse(url=url)
 
     # Extract manga description
     about_story = soup.find("div", class_="manga-excerpt")
     about_story = about_story.p.get_text(strip=True) if about_story else "N/A"
 
-    # Extract genres
-    genres = [
-        a.get_text(strip=True)
-        for a in soup.find("div", class_="genres-content").find_all("a")
-    ]
-
-    # Extract cover image URL
-    cover_manga = soup.find("div", class_="summary_image").find("img")["src"]
-
     # Create MangaInfo object
     info_manga = MangaInfo(
-        name=name,
-        cover=cover_manga,
-        genres=genres,
+        name=soup.find("div", class_="post-title").find("h1").text.strip(),
+        cover=soup.find("div", class_="summary_image").find("img")["src"],
+        genres=[
+            a.get_text(strip=True)
+            for a in soup.find("div", class_="genres-content").find_all("a")
+        ],
         aboutStory=about_story,
     )
 
@@ -119,18 +115,15 @@ async def manga(soup: BeautifulSoup) -> Manga:
     )
     for li in ul.find_all("li", class_="wp-manga-chapter"):
         aTag = li.find("a")
-        chapter_url = aTag["href"]
-        date = li.find("span", class_="chapter-release-date").get_text(strip=True)
-
         chapterTitleText = aTag.text.strip()
         chapter_number, chapter_title = await extract_chapter_info(chapterTitleText)
 
         # Create ChapterDetails object
         chapter_details = ChapterDetails(
             number=chapter_number,
-            link=chapter_url,
+            link=aTag["href"],
             title=chapter_title if chapter_title else "N/A",
-            date=date,
+            date=li.find("span", class_="chapter-release-date").get_text(strip=True),
         )
         chapters.append(chapter_details)
 
@@ -159,7 +152,9 @@ async def extract_chapter_info(title: str) -> Tuple[str, str]:
 
 
 # Extracts chapter details from the chapter page
-async def chapter(soup: BeautifulSoup) -> Chapter:
+async def chapter(url: str) -> Chapter:
+    soup = await pyparse(url=url)
+
     # Extract image URLs from the page-break divs
     img_tag = soup.select(".page-break img.wp-manga-chapter-img")
     image_urls = [img["src"].strip() for img in img_tag]
@@ -169,7 +164,9 @@ async def chapter(soup: BeautifulSoup) -> Chapter:
     title = active_li.text.strip() if active_li else None
 
     # Extract next and previous chapter navigation links
-    next_navigation, prev_navigation = await extract_chapter_links(soup)
+    nav_links = soup.find("div", class_="nav-links")
+    next_navigation = await create_navigation_link(nav_links, "btn next_page")
+    prev_navigation = await create_navigation_link(nav_links, "btn prev_page")
 
     return Chapter(
         source=source,
@@ -178,16 +175,6 @@ async def chapter(soup: BeautifulSoup) -> Chapter:
         nextNavigation=next_navigation,
         prevNavigation=prev_navigation,
     )
-
-
-# Extracts the next and previous chapter navigation links.
-async def extract_chapter_links(soup: BeautifulSoup) -> tuple:
-    nav_links = soup.find("div", class_="nav-links")
-
-    next_navigation = await create_navigation_link(nav_links, "btn next_page")
-    prev_navigation = await create_navigation_link(nav_links, "btn prev_page")
-
-    return next_navigation, prev_navigation
 
 
 #  --Helper functions--
@@ -242,12 +229,12 @@ async def search(keyword: str) -> Search:
         if result:
             data = []
             for manga in result:
-                title = manga.get("title")
-                link = manga.get("url")
-                type_ = manga.get("type")
-
                 # Create SearchDetails object
-                search_details = SearchDetails(name=title, link=link, type=type_)
+                search_details = SearchDetails(
+                    name=manga.get("title"),
+                    link=manga.get("url"),
+                    type=manga.get("type"),
+                )
                 data.append(search_details)
 
             return Search(source=source, results=data)

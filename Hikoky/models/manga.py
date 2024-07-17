@@ -96,7 +96,6 @@ class Manga(BaseModel):
     def save_manga_chapter_paths(self, manga_path: str):
         if manga_path:
             self.mangaPath = manga_path
-            print(manga_path)
             chapter_paths = [
                 chapter.save(self.source, manga_path) for chapter in self.chapters
             ]
